@@ -4,9 +4,8 @@ import re
 import tempfile
 from typing import Any
 
-import nox
-from nox.sessions import Session
-
+import nox  # type: ignore
+from nox.sessions import Session  # type: ignore
 
 # Name of the package.
 PACKAGE = "binance_api_fetcher"
@@ -118,7 +117,11 @@ def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> Non
 
 @nox.session(python=dev_python)
 def black(session: Session) -> None:
-    """Run black code formatter."""
+    """Run black code formatter.
+
+    Args:
+        session: The Session object.
+    """
     args = session.posargs or LOCATIONS
     install_with_constraints(session, "black")
     session.run("black", *args)
@@ -126,7 +129,11 @@ def black(session: Session) -> None:
 
 @nox.session(python=python_versions)
 def lint(session: Session) -> None:
-    """Lint using flake8."""
+    """Lint using flake8.
+
+    Args:
+        session: The Session object.
+    """
     args = session.posargs or LOCATIONS
     install_with_constraints(
         session,
@@ -144,7 +151,11 @@ def lint(session: Session) -> None:
 
 @nox.session(python=python_versions)
 def mypy(session: Session) -> None:
-    """Type-check using mypy."""
+    """Type-check using mypy.
+
+    Args:
+        session: The Session object.
+    """
     args = session.posargs or LOCATIONS
     install_with_constraints(session, "mypy")
     session.run("mypy", *args)
@@ -152,14 +163,22 @@ def mypy(session: Session) -> None:
 
 @nox.session(python=dev_python)
 def safety(session: Session) -> None:
-    """Scan dependencies for insecure packages."""
+    """Scan dependencies for insecure packages.
+
+    Args:
+        session: The Session object.
+    """
     install_with_constraints(session, "safety")
     session.run("safety", "check", "--full-report")
 
 
 @nox.session(name="test", python=python_versions)
 def pytest(session: Session) -> None:
-    """Run the test suite."""
+    """Run the test suite.
+
+    Args:
+        session: The Session object.
+    """
     args = session.posargs or ["--cov"]
     install_with_constraints(
         session, "coverage[toml]", "pytest", "pytest-cov", "typeguard"
@@ -176,7 +195,11 @@ def pytest(session: Session) -> None:
 
 @nox.session(name="test-integration", python=python_versions)
 def pytest_integration(session: Session) -> None:
-    """Run integration tests."""
+    """Run integration tests.
+
+    Args:
+        session: The Session object.
+    """
     args = session.posargs or ["--cov"]
     session.install(".")
     install_with_constraints(
@@ -193,6 +216,10 @@ def pytest_integration(session: Session) -> None:
 
 @nox.session(python=dev_python)
 def cover(session: Session) -> None:
-    """Run the final coverage report."""
+    """Run the final coverage report.
+
+    Args:
+        session: The Session object.
+    """
     session.install("coverage[toml]")
     session.run("coverage", "html")

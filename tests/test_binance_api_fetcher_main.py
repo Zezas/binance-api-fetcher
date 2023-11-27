@@ -4,9 +4,8 @@ import sys
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from pytest import MonkeyPatch
-
 from binance_api_fetcher.__main__ import main, parse_args
+from pytest import MonkeyPatch
 
 
 class TestMain(TestCase):

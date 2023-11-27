@@ -6,12 +6,10 @@ import logging
 import os
 from sys import stdout
 
-from binance_api_fetcher.model.service import Service
-
 # TODO maybe put the config inside a function
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO").upper(),
-    format="%(asctime)s.%(msecs)06d %(levelname)s [%(filename)s:%(lineno)d] %(message)s",
+    format="%(asctime)s.%(msecs)06d %(levelname)s [%(filename)s:%(lineno)d] %(message)s",  # noqa: B950
     datefmt="%Y-%m-%d %H:%M:%S",
     stream=stdout,
 )
@@ -19,11 +17,15 @@ logger = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
-    """Parses user input arguments when starting loading process."""
+    """Parses user input arguments when starting loading process.
+
+    Returns:
+        argparse.Namespace: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(
         prog="python ./src/binance_api_fetcher/__main__.py"
     )
-    
+
     # TODO maybe add a --log variable
 
     parser.add_argument(
@@ -59,7 +61,7 @@ def parse_args() -> argparse.Namespace:
         help="Enable data persistence (default).",
     )
     parser.set_defaults(dry_run=ast.literal_eval(os.environ.get("DRY_RUN", "False")))
-    
+
     parser.add_argument(
         "--source",
         dest="source",
@@ -151,15 +153,17 @@ def parse_args() -> argparse.Namespace:
 
     return args_parsed
 
+
 def main() -> None:
     """Run the binance_api_fetcher service.
-    
-    Get arguments, create service instance and run service.  
+
+    Get arguments, create service instance and run service.
     """
     # Startup message
     logger.info("Starting service...")
     # Get args
     parsed_args: argparse.Namespace = parse_args()
+    logger.debug(parsed_args)
     # TODO service instance receives arguments
     # Create service instance
     # service: Service = Service(args=parsed_args)
@@ -168,5 +172,5 @@ def main() -> None:
     # service.run()
 
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     main()
