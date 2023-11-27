@@ -8,6 +8,7 @@ from sys import stdout
 
 from binance_api_fetcher.model.service import Service
 
+# TODO maybe put the config inside a function
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO").upper(),
     format="%(asctime)s.%(msecs)06d %(levelname)s [%(filename)s:%(lineno)d] %(message)s",
@@ -22,6 +23,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="python ./src/binance_api_fetcher/__main__.py"
     )
+    
+    # TODO maybe add a --log variable
 
     parser.add_argument(
         "--service",
