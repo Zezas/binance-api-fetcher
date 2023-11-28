@@ -1,4 +1,4 @@
-"""Loader execution class."""
+"""Binance API Fetcher main file."""
 
 import argparse
 import ast

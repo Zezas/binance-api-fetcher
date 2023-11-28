@@ -5,6 +5,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from binance_api_fetcher.__main__ import main, parse_args
+import pytest
 from pytest import MonkeyPatch
 
 
@@ -17,6 +18,7 @@ class TestMain(TestCase):
     """
 
     @patch.object(target=sys, attribute="argv", new=[])
+    @pytest.mark.unit
     def test_parse_args_default(self) -> None:
         """Test the parse_args function with default values.
 
@@ -40,6 +42,7 @@ class TestMain(TestCase):
         self.assertEqual(first=args.shard, second=0)
 
     @patch.object(target=sys, attribute="argv", new=[])
+    @pytest.mark.unit
     def test_parse_args_not_default(self) -> None:
         """Test the parse_args function with non default values.
 
@@ -81,6 +84,7 @@ class TestMain(TestCase):
 
     @patch(target="binance_api_fetcher.__main__.logger")
     @patch(target="binance_api_fetcher.__main__.parse_args")
+    @pytest.mark.unit
     def test_main_run(
         self,
         mock_parse_args: MagicMock,

@@ -38,6 +38,8 @@ pyaml = "^23.9.7"
 types-pyyaml = "^6.0.12.12"
 safety = "^2.3.5"
 xdoctest = "^1.1.2"
+sphinx = "^7.2.6"
+sphinx-autodoc-typehints = "^1.25.2"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
@@ -53,3 +55,11 @@ fail_under = 100
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[[tool.mypy.overrides]]
+module = [
+    "_pytest.*",
+    "pytest",
+    "psycopg2.*",
+]
+ignore_missing_imports = true

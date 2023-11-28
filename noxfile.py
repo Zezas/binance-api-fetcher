@@ -11,10 +11,10 @@ from nox.sessions import Session  # type: ignore
 PACKAGE = "binance_api_fetcher"
 
 # Sessions to run by running nox.
-nox.options.sessions = "lint", "mypy", "safety", "test", "cover"
+nox.options.sessions = "lint", "mypy", "safety", "test"
 
 # Locations to run commands against.
-LOCATIONS = "src", "tests", "./noxfile.py"
+LOCATIONS = "src", "tests", "./noxfile.py", "docs/conf.py"
 
 # Path to the folder containing the nox file.
 HERE = Path(__file__).parent
@@ -186,8 +186,27 @@ def pytest(session: Session) -> None:
     session.install(".")
     session.run(
         "pytest",
+        f"--typeguard-packages={PACKAGE}",
+        *args,
+    )
+
+
+@nox.session(name="test-unit", python=python_versions)
+def pytest_unit(session: Session) -> None:
+    """Run unit tests.
+
+    Args:
+        session: The Session object.
+    """
+    args = session.posargs or ["--cov"]
+    session.install(".")
+    install_with_constraints(
+        session, "coverage[toml]", "pytest", "pytest-cov", "typeguard"
+    )
+    session.run(
+        "pytest",
         "-m",
-        "not integration",
+        "unit",
         f"--typeguard-packages={PACKAGE}",
         *args,
     )
@@ -212,6 +231,38 @@ def pytest_integration(session: Session) -> None:
         f"--typeguard-packages={PACKAGE}",
         *args,
     )
+
+
+@nox.session(name="test-e2e", python=python_versions)
+def pytest_e2e(session: Session) -> None:
+    """Run e2e tests.
+
+    Args:
+        session: The Session object.
+    """
+    args = session.posargs or ["--cov"]
+    session.install(".")
+    install_with_constraints(
+        session, "coverage[toml]", "pytest", "pytest-cov", "typeguard"
+    )
+    session.run(
+        "pytest",
+        "-m",
+        "e2e",
+        f"--typeguard-packages={PACKAGE}",
+        *args,
+    )
+
+
+@nox.session(python=dev_python)
+def docs(session: Session) -> None:
+    """Build the documentation.
+
+    Args:
+        session: The Session object.
+    """
+    install_with_constraints(session, "sphinx", "sphinx-autodoc-typehints")
+    session.run("sphinx-build", "docs", "docs/_build")
 
 
 @nox.session(python=dev_python)

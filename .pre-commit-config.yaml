@@ -42,11 +42,6 @@ repos:
             entry: darglint
             language: system
             types: [python]
-          - id: mypy
-            name: mypy
-            entry: mypy
-            language: system
-            types: [python]
           - id: pytest-check
             name: pytest-check
             entry: pytest
