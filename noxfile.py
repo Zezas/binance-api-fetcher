@@ -267,10 +267,22 @@ def docs(session: Session) -> None:
 
 @nox.session(python=dev_python)
 def cover(session: Session) -> None:
-    """Run the final coverage report.
+    """Run the simple coverage report.
 
     Args:
         session: The Session object.
     """
     session.install("coverage[toml]")
     session.run("coverage", "html")
+
+
+@nox.session(python=dev_python)
+def coverage(session: Session) -> None:
+    """Run the codecov report.
+
+    Args:
+        session: The Session object.
+    """
+    install_with_constraints(session, "coverage[toml]", "codecov")
+    session.run("coverage", "xml", "--fail-under=0")
+    session.run("codecov", *session.posargs)

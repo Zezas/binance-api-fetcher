@@ -1,4 +1,4 @@
-name: Tests
+name: Coverage
 on: push
 jobs:
   tests:
@@ -26,7 +26,7 @@ jobs:
         pip install poetry==1.7.1
 
     - name: Run tests with nox
-      run: nox
+      run: nox --sessions test coverage
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
