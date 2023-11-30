@@ -1,10 +1,11 @@
 """Test binance_api_fetcher __main__."""
 from argparse import Namespace
 import sys
+from sys import stdout
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from binance_api_fetcher.__main__ import main, parse_args
+from binance_api_fetcher.__main__ import logging_config, main, parse_args
 import pytest
 from pytest import MonkeyPatch
 
@@ -30,6 +31,7 @@ class TestMain(TestCase):
 
         # Test for default values
         self.assertIsInstance(obj=args, cls=Namespace)
+        self.assertEqual(first=args.log_level, second="info")
         self.assertTrue(expr=args.run_as_service)
         self.assertFalse(expr=args.dry_run)
         self.assertIsNone(obj=args.source)
@@ -49,10 +51,12 @@ class TestMain(TestCase):
         In this test we empty the argv and then set all env variables
         before asserting the values returned by the parse_args_function.
         """
-        # TODO refactor into smaller functions
+        # TODO refactor into smaller functions:
+        #   1 for set env and other for testing itself
         # Create a monkeypatch obj
         monkeypatch: MonkeyPatch = MonkeyPatch()
         # Set environment
+        monkeypatch.setenv(name="LOG_LEVEL", value="debug")
         monkeypatch.setenv(name="RUN_AS_SERVICE", value="False")
         monkeypatch.setenv(name="DRY_RUN", value="True")
         monkeypatch.setenv(name="SOURCE", value="source")
@@ -69,6 +73,7 @@ class TestMain(TestCase):
 
         # Test for non default values
         self.assertIsInstance(obj=args, cls=Namespace)
+        self.assertEqual(first=args.log_level, second="debug")
         self.assertFalse(expr=args.run_as_service)
         self.assertTrue(expr=args.dry_run)
         self.assertIsNotNone(obj=args.source)
@@ -82,13 +87,47 @@ class TestMain(TestCase):
         self.assertEqual(first=args.datapoint_limit, second=1000)
         self.assertEqual(first=args.shard, second=1)
 
-    @patch(target="binance_api_fetcher.__main__.logger")
+    @patch(target="binance_api_fetcher.__main__.logging")
+    @pytest.mark.unit
+    def test_logging_config(
+        self,
+        mock_logging: MagicMock,
+    ) -> None:
+        """Test the logging_config function execution.
+
+        In this test we check if the logging_config function
+        is executed with the right parameters, i.e. if it calls
+        the logging.basicConfig with the expected configuration.
+
+        Args:
+            mock_logging: Mock for logging.basicConfig().
+        """
+        # Set up logging_level
+        logging_level: str = "debug"
+
+        # Execute the logging_level function
+        logging_config(logging_level=logging_level)
+
+        # Test logging.basicConfig function call
+        mock_logging.basicConfig.assert_called_once_with(
+            level=logging_level.upper(),
+            format=(
+                "%(asctime)s.%(msecs)06d %(levelname)s "
+                "[%(filename)s:%(lineno)d] %(message)s"
+            ),
+            datefmt="%Y-%m-%d %H:%M:%S",
+            stream=stdout,
+        )
+
     @patch(target="binance_api_fetcher.__main__.parse_args")
+    @patch(target="binance_api_fetcher.__main__.logging_config")
+    @patch(target="binance_api_fetcher.__main__.logger")
     @pytest.mark.unit
     def test_main_run(
         self,
-        mock_parse_args: MagicMock,
         mock_logger: MagicMock,
+        mock_logging_config: MagicMock,
+        mock_parse_args: MagicMock,
     ) -> None:
         """Test the execution of the main function.
 
@@ -97,12 +136,16 @@ class TestMain(TestCase):
         right attributes.
 
         Args:
-            mock_parse_args: Mock for parse_args().
             mock_logger: Mock for logger.info().
+            mock_logging_config: Mock for logging_config().
+            mock_parse_args: Mock for parse_args().
         """
         # run it
         main()
 
         # Assert that each function is called once
-        mock_logger.info.assert_called_once_with("Starting service...")
         mock_parse_args.assert_called_once()
+        mock_logging_config.assert_called_once_with(
+            logging_level=mock_parse_args.return_value.log_level
+        )
+        mock_logger.info.assert_called_once_with(msg="Starting service...")

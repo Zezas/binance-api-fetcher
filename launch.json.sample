@@ -1,0 +1,31 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+
+        {
+            "name": "Service: Main File",
+            "type": "python",
+            "request": "launch",
+            "program": "src\\binance_api_fetcher\\__main__.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "LOG_LEVEL": "DEBUG",
+                "RUN_AS_SERVICE": "False",
+                "MIN_SLEEP": "0",
+                "MAX_SLEEP": "1",
+                "DRY_RUN": "False",
+                "SOURCE": "https://api.binance.com/api/v3/",
+                "TARGET": "TARGET=user=dev_user password=d3v_pass host=localhost port=5432 dbname=binance",
+                "SYMBOL": "True",
+                "KLINE_1D": "False",
+                "DATAPOINT_LIMIT": "1000",
+                "SHARD": "0",
+            }
+        }
+    ]
+}

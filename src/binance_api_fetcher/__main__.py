@@ -3,17 +3,11 @@
 import argparse
 import ast
 import logging
+from logging import Logger
 import os
 from sys import stdout
 
-# TODO maybe put the config inside a function
-logging.basicConfig(
-    level=os.environ.get("LOG_LEVEL", "INFO").upper(),
-    format="%(asctime)s.%(msecs)06d %(levelname)s [%(filename)s:%(lineno)d] %(message)s",  # noqa: B950
-    datefmt="%Y-%m-%d %H:%M:%S",
-    stream=stdout,
-)
-logger = logging.getLogger(__name__)
+logger: Logger = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
@@ -26,7 +20,14 @@ def parse_args() -> argparse.Namespace:
         prog="python ./src/binance_api_fetcher/__main__.py"
     )
 
-    # TODO maybe add a --log variable
+    parser.add_argument(
+        "--log-level",
+        dest="log_level",
+        type=str,
+        required=False,
+        default=os.environ.get("LOG_LEVEL", default="info"),
+        help="Set the logging level (default: info).",
+    )
 
     parser.add_argument(
         "--service",
@@ -43,7 +44,9 @@ def parse_args() -> argparse.Namespace:
         help="Disable continuous pooling of source.",
     )
     parser.set_defaults(
-        run_as_service=ast.literal_eval(os.environ.get("RUN_AS_SERVICE", "True"))
+        run_as_service=ast.literal_eval(
+            os.environ.get("RUN_AS_SERVICE", default="True")
+        )
     )
 
     parser.add_argument(
@@ -60,7 +63,9 @@ def parse_args() -> argparse.Namespace:
         required=False,
         help="Enable data persistence (default).",
     )
-    parser.set_defaults(dry_run=ast.literal_eval(os.environ.get("DRY_RUN", "False")))
+    parser.set_defaults(
+        dry_run=ast.literal_eval(os.environ.get("DRY_RUN", default="False"))
+    )
 
     parser.add_argument(
         "--source",
@@ -84,19 +89,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--min_sleep",
         dest="min_sleep",
-        default=int(os.getenv("MIN_SLEEP", default=15)),
         type=int,
         required=False,
-        help="Service minimum time to sleep between iterations.",
+        default=int(os.getenv("MIN_SLEEP", default=15)),
+        help="Service minimum time to sleep between iterations (default: 15).",
     )
 
     parser.add_argument(
         "--max_sleep",
         dest="max_sleep",
-        default=int(os.getenv("MAX_SLEEP", default=30)),
         type=int,
         required=False,
-        help="Service maximum time to sleep between iterations.",
+        default=int(os.getenv("MAX_SLEEP", default=30)),
+        help="Service maximum time to sleep between iterations (default: 30).",
     )
 
     parser.add_argument(
@@ -113,7 +118,9 @@ def parse_args() -> argparse.Namespace:
         required=False,
         help="Disable symbol scraping.",
     )
-    parser.set_defaults(symbol=ast.literal_eval(os.environ.get("SYMBOL", "False")))
+    parser.set_defaults(
+        symbol=ast.literal_eval(os.environ.get("SYMBOL", default="False"))
+    )
 
     parser.add_argument(
         "--scrape-kline-1d",
@@ -129,24 +136,26 @@ def parse_args() -> argparse.Namespace:
         required=False,
         help="Disable kline_1d scraping.",
     )
-    parser.set_defaults(kline_1d=ast.literal_eval(os.environ.get("KLINE_1D", "False")))
+    parser.set_defaults(
+        kline_1d=ast.literal_eval(os.environ.get("KLINE_1D", default="False"))
+    )
 
     parser.add_argument(
         "--datapoint-limit",
         dest="datapoint_limit",
-        default=int(os.getenv("DATAPOINT_LIMIT", default=500)),
         type=int,
         required=False,
-        help="Service datapoint limit.",
+        default=int(os.getenv("DATAPOINT_LIMIT", default=500)),
+        help="Service datapoint limit (default: 500).",
     )
 
     parser.add_argument(
         "--shard",
         dest="shard",
-        default=int(os.getenv("SHARD", default=0)),
         type=int,
         required=False,
-        help="Service shard.",
+        default=int(os.getenv("SHARD", default=0)),
+        help="Service shard (default: 0).",
     )
 
     args_parsed: argparse.Namespace = parser.parse_args()
@@ -154,16 +163,36 @@ def parse_args() -> argparse.Namespace:
     return args_parsed
 
 
+def logging_config(logging_level: str) -> None:
+    """Configure the logging with the required level.
+
+    Args:
+        logging_level: The level of the logging.
+    """
+    logging.basicConfig(
+        level=logging_level.upper(),
+        format=(
+            "%(asctime)s.%(msecs)06d %(levelname)s "
+            "[%(filename)s:%(lineno)d] %(message)s"
+        ),
+        datefmt="%Y-%m-%d %H:%M:%S",
+        stream=stdout,
+    )
+
+
 def main() -> None:
     """Run the binance_api_fetcher service.
 
-    Get arguments, create service instance and run service.
+    Get arguments, configure logging,
+    create service instance and run service.
     """
-    # Startup message
-    logger.info("Starting service...")
-    # Get args
+    # Get arguments
     parsed_args: argparse.Namespace = parse_args()
-    logger.debug(parsed_args)
+    # Configure logging
+    logging_config(logging_level=parsed_args.log_level)
+    logger.debug(msg=parsed_args)
+    # Startup message
+    logger.info(msg="Starting service...")
     # TODO service instance receives arguments
     # Create service instance
     # service: Service = Service(args=parsed_args)
