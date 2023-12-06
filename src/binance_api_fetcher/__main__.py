@@ -7,11 +7,13 @@ from logging import Logger
 import os
 from sys import stdout
 
+from binance_api_fetcher.model import Service
+
 logger: Logger = logging.getLogger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
-    """Parses user input arguments when starting loading process.
+    """Parses user input arguments when starting the service.
 
     Returns:
         argparse.Namespace: Parsed arguments.
@@ -193,9 +195,9 @@ def main() -> None:
     logger.debug(msg=parsed_args)
     # Startup message
     logger.info(msg="Starting service...")
-    # TODO service instance receives arguments
     # Create service instance
-    # service: Service = Service(args=parsed_args)
+    service: Service = Service(args=parsed_args)
+    logger.debug(msg=service)
     # TODO service instance runs without argumetns
     # Run service
     # service.run()

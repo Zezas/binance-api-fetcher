@@ -122,9 +122,11 @@ class TestMain(TestCase):
     @patch(target="binance_api_fetcher.__main__.parse_args")
     @patch(target="binance_api_fetcher.__main__.logging_config")
     @patch(target="binance_api_fetcher.__main__.logger")
+    @patch(target="binance_api_fetcher.__main__.Service")
     @pytest.mark.unit
     def test_main_run(
         self,
+        mock_service: MagicMock,
         mock_logger: MagicMock,
         mock_logging_config: MagicMock,
         mock_parse_args: MagicMock,
@@ -136,6 +138,7 @@ class TestMain(TestCase):
         right attributes.
 
         Args:
+            mock_service: Mock for Service class call.
             mock_logger: Mock for logger.info().
             mock_logging_config: Mock for logging_config().
             mock_parse_args: Mock for parse_args().
@@ -149,3 +152,4 @@ class TestMain(TestCase):
             logging_level=mock_parse_args.return_value.log_level
         )
         mock_logger.info.assert_called_once_with(msg="Starting service...")
+        mock_service.assert_called_once_with(args=mock_parse_args.return_value)

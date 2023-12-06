@@ -1,4 +1,4 @@
-"""The binance_api_fetcher project."""
+"""binance_api_fetcher project."""
 
 # Source the package version from the pyproject.toml file
 try:
