@@ -1,4 +1,5 @@
-"""Test binance_api_fetcher service."""
+"""Test binance_api_fetcher Service class."""
+
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -7,7 +8,7 @@ import pytest
 
 
 class TestService(TestCase):
-    """Class to unit test the Service class functions.
+    """Class to test the Service class functions.
 
     We use mocks for constructors and function calls to keep the
     unit tests isolated, i.e. we don't want to test the interaction
@@ -43,7 +44,7 @@ class TestService(TestCase):
         have ValueErrors because of the packages that should not be
         addressed by these tests.
         """
-        # Create the service args with the needed arguments
+        # Set up the service args with the needed arguments
         self.service_args = MagicMock(
             log_level="debug",
             run_as_service=True,
@@ -63,14 +64,14 @@ class TestService(TestCase):
             datapoint_limit=1000,
             shard=1,
         )
-        # Create a Service instance for all tests
+        # Set up a Service instance for all tests
         self.service = Service(args=self.service_args)
         # # Save the constructor mocks
         # self.mock_service_source = mock_service_source
         # self.mock_service_target = mock_service_target
 
     @pytest.mark.unit
-    def test_service_init_(
+    def test_service_init(
         self,
     ) -> None:
         """Test the Service __init__ function.
@@ -89,7 +90,11 @@ class TestService(TestCase):
         # self._test_init_func_calls()
 
     def _test_init_args_assignment(self) -> None:
-        """Test if args are assigned."""
+        """Test if args are assigned.
+
+        Test if args are assigned in the __init__ function,
+        by comparing the service and args attributes.
+        """
         self.assertEqual(
             first=self.service._run_as_service, second=self.service_args.run_as_service
         )
@@ -122,24 +127,165 @@ class TestService(TestCase):
         self.assertEqual(first=self.service._shard, second=self.service_args.shard)
 
     # def _test_init_constructor_assignment(self) -> None:
-    #     """Test if the constructors are assigned."""
+    #     """Test if constructors are assigned.
+    #
+    #     Test if constructors are assigned in the __init__ function,
+    #     by comparing the service source and target attributes with the
+    #     Source and Target constructors return value.
+    #     """
     #     self.assertEqual(
     #         first=self.service._source, second=self.mock_service_source.return_value
     #     )
     #     self.assertEqual(
     #         first=self.service._target, second=self.mock_service_target.return_value
     #     )
-    #     self.assertEqual(
-    #         first=self.service._nats_client,
-    #         second=self.mock_service_nats_client.return_value,
-    #     )
 
     # def _test_init_constructor_calls(self) -> None:
-    #     """Test if the constructors are called."""
+    #     """Test if constructors are called.
+    #
+    #     Test if constructors are called in the __init__ function,
+    #     with the respective arguments.
+    #     """
     #     self.mock_service_source.assert_called_once_with(self.service_args.source)
     #     self.mock_service_target.assert_called_once_with(self.service_args.target)
     #     self.mock_service_nats_client.assert_called_once()
 
     # def _test_init_func_calls(self) -> None:
-    #     """Test if the function are called."""
+    #     """Test if functions are called.
+    #
+    #     Test if functions are called in the __init__ function,
+    #     with the respective arguments.
+    #     """
     #     self.mock_service_declare_metrics.assert_called_once()
+
+    @pytest.mark.unit
+    def test_service_run(
+        self,
+    ) -> None:
+        """Test the Service run function.
+
+        Test if:
+            1. Source and Target components call their connect method;
+            2. The call to the run_service function is made;
+            3. The call to the run_once function is made;
+            4. The call to the tear_down function is made.
+        """
+        # TODO implement
+        pass
+
+    @pytest.mark.unit
+    def test_service_run_service(
+        self,
+    ) -> None:
+        """Test the Service run_service function.
+
+        Test if:
+            1. asdasdasd;
+            2. asdasd.
+        """
+        # TODO implement
+        pass
+
+    @pytest.mark.unit
+    def test_service_run_once(
+        self,
+    ) -> None:
+        """Test the Service run_once function.
+
+        Test if:
+            1. asdasdasd;
+            2. asdasd.
+        """
+        # TODO implement
+        pass
+
+    @pytest.mark.unit
+    def test_service_scrape(
+        self,
+    ) -> None:
+        """Test the Service scrape function.
+
+        Test if:
+            1. asdasdasd;
+            2. asdasd.
+        """
+        # TODO implement
+        pass
+
+    @pytest.mark.unit
+    def test_service_parse(
+        self,
+    ) -> None:
+        """Test the Service parse function.
+
+        Test if:
+            1. asdasdasd;
+            2. asdasd.
+        """
+        # TODO implement
+        pass
+
+    @pytest.mark.unit
+    def test_service_process(
+        self,
+    ) -> None:
+        """Test the Service process function.
+
+        Test if:
+            1. asdasdasd;
+            2. asdasd.
+        """
+        # TODO implement
+        pass
+
+    @pytest.mark.unit
+    def test_service_compute_events(
+        self,
+    ) -> None:
+        """Test the Service compute_events function.
+
+        Test if:
+            1. asdasdasd;
+            2. asdasd.
+        """
+        # TODO implement
+        pass
+
+    @pytest.mark.unit
+    def test_service_persist_delivery(
+        self,
+    ) -> None:
+        """Test the Service persist_delivery function.
+
+        Test if:
+            1. asdasdasd;
+            2. asdasd.
+        """
+        # TODO implement
+        pass
+
+    @pytest.mark.unit
+    def test_service_persist_to_database(
+        self,
+    ) -> None:
+        """Test the Service persist_to_database function.
+
+        Test if:
+            1. asdasdasd;
+            2. asdasd.
+        """
+        # TODO implement
+        pass
+
+    @pytest.mark.unit
+    def test_service_tear_down(
+        self,
+    ) -> None:
+        """Test the Service tear_down function.
+
+        Test if:
+            1. asdasdasd;
+            2. asdasd.
+        """
+        # TODO implement
+        pass

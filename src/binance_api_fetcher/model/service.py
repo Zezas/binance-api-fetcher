@@ -134,40 +134,26 @@ class Service:
         # if self._kline_1d:
         #     self._entities.add(Entity.KLINE_1D)
 
-    # def tear_down(self) -> None:
-    #     """Tear down service.
+    def run(self) -> None:
+        """Checks the command line arguments for execution type.
 
-    #     Disconnects the Source and Target components.
-    #     """
-    #     # Disconnect the Source component
-    #     self._source_component.disconnect()
-    #     # Disconnect the Target component
-    #     self._target_component.disconnect()
+        This process can be executed as a service or just once.
+        """
+        pass  # pragma: no cover
 
-    # def run(self, args: argparse.Namespace) -> None:
-    #     """Checks the command line arguments for execution type.
+        # # TODO put this in the main file
+        # logger.info(f"binance-delivery-api v{__version__}")
 
-    #     This process can be executed as a service or just once.
+        # self._source.connect()
+        # self._target.connect()
 
-    #     Args:
-    #         args: Variables given by user when starting loader process.
-    #     """
-    #     logger.info(f"binance-delivery-api v{__version__}")
+        # # type of execution
+        # if args.run_as_service:
+        #     self.run_service()
+        # else:
+        #     self.run_once()
 
-    #     self.setup(args=args)
-
-    #     self._source.connect()
-    #     self._target.connect()
-    #     if self._notifications:
-    #         self._notifier.connect()
-
-    #     # type of execution
-    #     if args.run_as_service:
-    #         self.run_service()
-    #     else:
-    #         self.run_once()
-
-    #     self.tear_down()
+        # self.tear_down()
 
     # def run_service(self) -> None:
     #     """Runs the application as a continuous process.
@@ -632,3 +618,13 @@ class Service:
     #         instruction=query.DELETE,
     #         logs=[e.curr.key for e in events[EventType.REMOVE]],
     #     )
+
+    # def tear_down(self) -> None:
+    #     """Tear down service.
+
+    #     Disconnects the Source and Target components.
+    #     """
+    #     # Disconnect the Source component
+    #     self._source_component.disconnect()
+    #     # Disconnect the Target component
+    #     self._target_component.disconnect()

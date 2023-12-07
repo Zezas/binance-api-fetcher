@@ -7,6 +7,7 @@ from logging import Logger
 import os
 from sys import stdout
 
+from binance_api_fetcher import __version__
 from binance_api_fetcher.model import Service
 
 logger: Logger = logging.getLogger(__name__)
@@ -194,13 +195,14 @@ def main() -> None:
     logging_config(logging_level=parsed_args.log_level)
     logger.debug(msg=parsed_args)
     # Startup message
-    logger.info(msg="Starting service...")
+    logger.info(msg=f"Starting binance-delivery-fetcher v{__version__} service.")
     # Create service instance
     service: Service = Service(args=parsed_args)
     logger.debug(msg=service)
-    # TODO service instance runs without argumetns
     # Run service
-    # service.run()
+    service.run()
+    # Shutdown message
+    logger.info(msg=f"Service binance-delivery-fetcher v{__version__} shutdown.")
 
 
 if __name__ == "__main__":  # pragma: no cover
