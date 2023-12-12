@@ -48,8 +48,8 @@ class Service:
     _min_sleep: int
     # Service maximum time to sleep between iterations
     _max_sleep: int
-    # Bool to know if service will scrape symbol information
-    _symbol: bool
+    # String to know which symbol to scrape
+    _symbol: str
     # Bool to know if service will scrape kline_1d information
     _kline_1d: bool
     # Service datapoint limit
@@ -135,32 +135,35 @@ class Service:
         #     self._entities.add(Entity.KLINE_1D)
 
     def run(self) -> None:
-        """Checks the command line arguments for execution type.
+        """Run the service according to its configuration.
 
-        This process can be executed as a service or just once.
+        Start by connecting to both source and target components,
+        then run the service according to its configuration. This
+        service can run just once or continuosly. Finally, tear down
+        the service.
         """
-        pass  # pragma: no cover
-
-        # # TODO put this in the main file
-        # logger.info(f"binance-delivery-api v{__version__}")
-
+        # Connect to source and target components
         # self._source.connect()
         # self._target.connect()
 
-        # # type of execution
-        # if args.run_as_service:
-        #     self.run_service()
-        # else:
-        #     self.run_once()
+        # Run service according to configurtion
+        if self._run_as_service:
+            self.run_service()
+        else:
+            self.run_once()
 
+        # Tear down
         # self.tear_down()
 
-    # def run_service(self) -> None:
-    #     """Runs the application as a continuous process.
+    def run_service(self) -> None:
+        """Run the service as a continuous process.
 
-    #     Polls the source every X seconds for new records.
-    #     Once new records are found, operations are applied to the "target" components.
-    #     """
+        Polls the source every X seconds for new records.
+        Once new records are found, operations are applied to the "target" components.
+        """
+        # TODO implment, including docstring
+        pass  # pragma: no cover
+
     #     logger.info(
     #         f"Running as a service. "
     #         f"source_polling_interval=[{self._min_sleep},{self._max_sleep}]."
@@ -181,8 +184,10 @@ class Service:
 
     #     logger.info("Terminating...")
 
-    # def run_once(self) -> None:
-    #     """Runs the synchronization process once."""
+    def run_once(self) -> None:
+        """Run the process once."""
+        pass  # pragma: no cover
+
     #     start_time: datetime = datetime.utcnow()
     #     end_time: datetime
 

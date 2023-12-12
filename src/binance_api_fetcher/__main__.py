@@ -57,7 +57,7 @@ def parse_args() -> argparse.Namespace:
         dest="dry_run",
         action="store_true",
         required=False,
-        help="Disable data persistence (parse only).",
+        help="Disable data persistence.",
     )
     parser.add_argument(
         "--no-dry-run",
@@ -75,7 +75,7 @@ def parse_args() -> argparse.Namespace:
         dest="source",
         type=str,
         required=False,
-        default=os.environ.get("SOURCE"),
+        default=os.environ.get("SOURCE", default=""),
         help="Binance API url. e.g.: https://api.binance.com/api/v3/",
     )
 
@@ -84,7 +84,7 @@ def parse_args() -> argparse.Namespace:
         dest="target",
         type=str,
         required=False,
-        default=os.environ.get("TARGET"),
+        default=os.environ.get("TARGET", default=""),
         help="Postgres connection URL. e.g.: "
         "user=username password=password host=localhost port=5432 dbname=binance",
     )
@@ -108,21 +108,12 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--scrape-symbol",
+        "--symbol",
         dest="symbol",
-        action="store_true",
+        type=str,
         required=False,
-        help="Enable symbol scraping.",
-    )
-    parser.add_argument(
-        "--no-scrape-symbol",
-        dest="symbol",
-        action="store_false",
-        required=False,
-        help="Disable symbol scraping.",
-    )
-    parser.set_defaults(
-        symbol=ast.literal_eval(os.environ.get("SYMBOL", default="False"))
+        default=os.environ.get("SYMBOL", default=""),
+        help="Symbol to scrape.",
     )
 
     parser.add_argument(

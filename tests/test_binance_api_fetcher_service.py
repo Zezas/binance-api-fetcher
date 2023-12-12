@@ -1,7 +1,7 @@
 """Test binance_api_fetcher Service class."""
 
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from binance_api_fetcher.model import Service
 import pytest
@@ -59,7 +59,7 @@ class TestService(TestCase):
             ),
             min_sleep=0,
             max_sleep=1,
-            symbol=True,
+            symbol="ethbtc",
             kline_1d=True,
             datapoint_limit=1000,
             shard=1,
@@ -93,38 +93,59 @@ class TestService(TestCase):
         """Test if args are assigned.
 
         Test if args are assigned in the __init__ function,
-        by comparing the service and args attributes.
+        by comparing the service and args attributes and checking
+        the types of the attributes.
         """
+        # run_as_service
         self.assertEqual(
             first=self.service._run_as_service, second=self.service_args.run_as_service
         )
+        self.assertIsInstance(obj=self.service._run_as_service, cls=bool)
+        # dry_run
         self.assertEqual(
             first=self.service._dry_run,
             second=self.service_args.dry_run,
         )
+        self.assertIsInstance(obj=self.service._dry_run, cls=bool)
+        # source
         self.assertEqual(
             first=self.service._source,
             second=self.service_args.source,
         )
+        self.assertIsInstance(obj=self.service._source, cls=str)
+        # target
         self.assertEqual(
             first=self.service._target,
             second=self.service_args.target,
         )
+        self.assertIsInstance(obj=self.service._target, cls=str)
+        # min_sleep
         self.assertEqual(
             first=self.service._min_sleep, second=self.service_args.min_sleep
         )
+        self.assertIsInstance(obj=self.service._min_sleep, cls=int)
+        # max_sleep
         self.assertEqual(
             first=self.service._max_sleep, second=self.service_args.max_sleep
         )
+        self.assertIsInstance(obj=self.service._max_sleep, cls=int)
+        # symbol
         self.assertEqual(first=self.service._symbol, second=self.service_args.symbol)
+        self.assertIsInstance(obj=self.service._symbol, cls=str)
+        # kline_1d
         self.assertEqual(
             first=self.service._kline_1d, second=self.service_args.kline_1d
         )
+        self.assertIsInstance(obj=self.service._kline_1d, cls=bool)
+        # datapoint_limit
         self.assertEqual(
             first=self.service._datapoint_limit,
             second=self.service_args.datapoint_limit,
         )
+        self.assertIsInstance(obj=self.service._datapoint_limit, cls=int)
+        # shard
         self.assertEqual(first=self.service._shard, second=self.service_args.shard)
+        self.assertIsInstance(obj=self.service._shard, cls=int)
 
     # def _test_init_constructor_assignment(self) -> None:
     #     """Test if constructors are assigned.
@@ -169,9 +190,70 @@ class TestService(TestCase):
             2. The call to the run_service function is made;
             3. The call to the run_once function is made;
             4. The call to the tear_down function is made.
+
+        These tests are made by testing each scenario of the run function,
+        i.e. with the _run_as_service attribute set to True and False.
         """
-        # TODO implement
-        pass
+        self._test_service_run_with_run_as_service()
+        self._test_service_run_without_run_as_service()
+
+    @patch(target="binance_api_fetcher.model.service.Service.run_service")
+    def _test_service_run_with_run_as_service(
+        self,
+        mock_run_service: MagicMock,
+    ) -> None:
+        """Test the Service run function with run_as_service.
+
+        Test if:
+            1. Source and Target components call their connect method;
+            2. The call to the run_service function is made;
+            3. The call to the tear_down function is made.
+
+        Args:
+            mock_run_service: Mock for run_service function call.
+        """
+        # Save orignal value of run_as_service
+        attr_original_value: bool = self.service._run_as_service
+        # Change orignal value of run_as_service
+        self.service._run_as_service = True
+
+        # Call function to test
+        self.service.run()
+
+        #  Test if calls are made
+        mock_run_service.assert_called_once()
+
+        # Reset orignal value of run_as_service
+        self.service._run_as_service = attr_original_value
+
+    @patch(target="binance_api_fetcher.model.service.Service.run_once")
+    def _test_service_run_without_run_as_service(
+        self,
+        mock_run_once: MagicMock,
+    ) -> None:
+        """Test the Service run function without run_as_service.
+
+        Test if:
+            1. Source and Target components call their connect method;
+            2. The call to the run_once function is made;
+            3. The call to the tear_down function is made.
+
+        Args:
+            mock_run_once: Mock for run_once function call.
+        """
+        # Save orignal value of run_as_service
+        attr_original_value: bool = self.service._run_as_service
+        # Change orignal value of run_as_service
+        self.service._run_as_service = False
+
+        # Call function to test
+        self.service.run()
+
+        #  Test if calls are made
+        mock_run_once.assert_called_once()
+
+        # Reset orignal value of run_as_service
+        self.service._run_as_service = attr_original_value
 
     @pytest.mark.unit
     def test_service_run_service(

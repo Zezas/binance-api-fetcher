@@ -28,24 +28,46 @@ class TestMain(TestCase):
         """Test the parse_args function with default values.
 
         In this test we empty the argv and assert the default
-        values returned by the parse_args_functions.
+        values and types returned by the parse_args_functions.
         """
         # Execute the parse_args function
         args = parse_args()
 
         # Test args for default values
         self.assertIsInstance(obj=args, cls=Namespace)
+        # log_level
         self.assertEqual(first=args.log_level, second="info")
+        self.assertIsInstance(obj=args.log_level, cls=str)
+        # run_as_service
         self.assertTrue(expr=args.run_as_service)
+        self.assertIsInstance(obj=args.run_as_service, cls=bool)
+        # dry_run
         self.assertFalse(expr=args.dry_run)
-        self.assertIsNone(obj=args.source)
-        self.assertIsNone(obj=args.target)
+        self.assertIsInstance(obj=args.dry_run, cls=bool)
+        # source
+        self.assertEqual(first=args.source, second="")
+        self.assertIsInstance(obj=args.source, cls=str)
+        # target
+        self.assertEqual(first=args.target, second="")
+        self.assertIsInstance(obj=args.target, cls=str)
+        # min_sleep
         self.assertEqual(first=args.min_sleep, second=15)
+        self.assertIsInstance(obj=args.min_sleep, cls=int)
+        # max_sleep
         self.assertEqual(first=args.max_sleep, second=30)
-        self.assertFalse(expr=args.symbol)
+        self.assertIsInstance(obj=args.max_sleep, cls=int)
+        # symbol
+        self.assertEqual(first=args.symbol, second="")
+        self.assertIsInstance(obj=args.symbol, cls=str)
+        # kline_1d
         self.assertFalse(expr=args.kline_1d)
+        self.assertIsInstance(obj=args.kline_1d, cls=bool)
+        # datapoint_limit
         self.assertEqual(first=args.datapoint_limit, second=500)
+        self.assertIsInstance(obj=args.datapoint_limit, cls=int)
+        # shard
         self.assertEqual(first=args.shard, second=0)
+        self.assertIsInstance(obj=args.shard, cls=int)
 
     @patch.object(target=sys, attribute="argv", new=[])
     @pytest.mark.unit
@@ -53,10 +75,9 @@ class TestMain(TestCase):
         """Test the parse_args function with non default values.
 
         In this test we empty the argv and then set all env variables
-        before asserting the values returned by the parse_args_function.
+        before asserting the values and types returned by the
+        parse_args_function.
         """
-        # TODO refactor into smaller functions:
-        #   1 for set env and other for testing itself
         # Set up a monkeypatch obj
         monkeypatch: MonkeyPatch = MonkeyPatch()
         # Set up environment variables
@@ -67,7 +88,7 @@ class TestMain(TestCase):
         monkeypatch.setenv(name="TARGET", value="target")
         monkeypatch.setenv(name="MIN_SLEEP", value="0")
         monkeypatch.setenv(name="MAX_SLEEP", value="1")
-        monkeypatch.setenv(name="SYMBOL", value="True")
+        monkeypatch.setenv(name="SYMBOL", value="ethbtc")
         monkeypatch.setenv(name="KLINE_1D", value="True")
         monkeypatch.setenv(name="DATAPOINT_LIMIT", value="1000")
         monkeypatch.setenv(name="SHARD", value="1")
@@ -77,19 +98,39 @@ class TestMain(TestCase):
 
         # Assert args for non default values
         self.assertIsInstance(obj=args, cls=Namespace)
+        # log_level
         self.assertEqual(first=args.log_level, second="debug")
+        self.assertIsInstance(obj=args.log_level, cls=str)
+        # run_as_service
         self.assertFalse(expr=args.run_as_service)
+        self.assertIsInstance(obj=args.run_as_service, cls=bool)
+        # dry_run
         self.assertTrue(expr=args.dry_run)
-        self.assertIsNotNone(obj=args.source)
+        self.assertIsInstance(obj=args.dry_run, cls=bool)
+        # source
         self.assertEqual(first=args.source, second="source")
-        self.assertIsNotNone(obj=args.target)
+        self.assertIsInstance(obj=args.source, cls=str)
+        # target
         self.assertEqual(first=args.target, second="target")
+        self.assertIsInstance(obj=args.target, cls=str)
+        # min_sleep
         self.assertEqual(first=args.min_sleep, second=0)
+        self.assertIsInstance(obj=args.min_sleep, cls=int)
+        # max_sleep
         self.assertEqual(first=args.max_sleep, second=1)
-        self.assertTrue(expr=args.symbol)
+        self.assertIsInstance(obj=args.max_sleep, cls=int)
+        # symbol
+        self.assertEqual(first=args.symbol, second="ethbtc")
+        self.assertIsInstance(obj=args.symbol, cls=str)
+        # kline_1d
         self.assertTrue(expr=args.kline_1d)
+        self.assertIsInstance(obj=args.kline_1d, cls=bool)
+        # datapoint_limit
         self.assertEqual(first=args.datapoint_limit, second=1000)
+        self.assertIsInstance(obj=args.datapoint_limit, cls=int)
+        # shard
         self.assertEqual(first=args.shard, second=1)
+        self.assertIsInstance(obj=args.shard, cls=int)
 
     @patch(target="binance_api_fetcher.__main__.logging")
     @pytest.mark.unit
