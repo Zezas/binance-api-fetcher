@@ -64,7 +64,7 @@ class TestService(TestCase):
             datapoint_limit=1000,
             shard=1,
         )
-        # Set up a Service instance for all tests
+        # Set up a Service instance for all tests (call the __init__ function)
         self.service = Service(args=self.service_args)
         # # Save the constructor mocks
         # self.mock_service_source = mock_service_source
@@ -197,10 +197,12 @@ class TestService(TestCase):
         self._test_service_run_with_run_as_service()
         self._test_service_run_without_run_as_service()
 
-    @patch(target="binance_api_fetcher.model.service.Service.run_service")
+    @patch(target="binance_api_fetcher.model.service.logger")
+    @patch.object(target=Service, attribute="run_service")
     def _test_service_run_with_run_as_service(
         self,
         mock_run_service: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         """Test the Service run function with run_as_service.
 
@@ -211,25 +213,30 @@ class TestService(TestCase):
 
         Args:
             mock_run_service: Mock for run_service function call.
+            mock_logger: Mock for logger.info function call.
         """
         # Save orignal value of run_as_service
         attr_original_value: bool = self.service._run_as_service
         # Change orignal value of run_as_service
         self.service._run_as_service = True
 
-        # Call function to test
+        # Call the run function
         self.service.run()
 
-        #  Test if calls are made
+        # Assert logger.info is called with the correct message
+        mock_logger.info.assert_called_once_with(msg="Running the service continuosly.")
+        # Assert run_service is called exactly once
         mock_run_service.assert_called_once()
 
         # Reset orignal value of run_as_service
         self.service._run_as_service = attr_original_value
 
-    @patch(target="binance_api_fetcher.model.service.Service.run_once")
+    @patch(target="binance_api_fetcher.model.service.logger")
+    @patch.object(target=Service, attribute="run_once")
     def _test_service_run_without_run_as_service(
         self,
         mock_run_once: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         """Test the Service run function without run_as_service.
 
@@ -240,33 +247,57 @@ class TestService(TestCase):
 
         Args:
             mock_run_once: Mock for run_once function call.
+            mock_logger: Mock for logger.info function call.
         """
         # Save orignal value of run_as_service
         attr_original_value: bool = self.service._run_as_service
         # Change orignal value of run_as_service
         self.service._run_as_service = False
 
-        # Call function to test
+        # Call the run function
         self.service.run()
 
-        #  Test if calls are made
+        # Assert logger.info is called with the correct message
+        mock_logger.info.assert_called_once_with(msg="Running the service once.")
+        # Assert run_once is called exactly once
         mock_run_once.assert_called_once()
 
         # Reset orignal value of run_as_service
         self.service._run_as_service = attr_original_value
 
+    @patch(target="binance_api_fetcher.model.service.logger")
+    @patch.object(
+        target=Service, attribute="run_once", side_effect=Exception("Testing error")
+    )
     @pytest.mark.unit
     def test_service_run_service(
         self,
+        mock_run_once: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         """Test the Service run_service function.
 
         Test if:
-            1. asdasdasd;
-            2. asdasd.
+            1. The call to the run_once function is made;
+            2. The call to the random_sleep function is made;
+            3. The Exception is raised.
+
+        Args:
+            mock_run_once: Mock for run_once function call.
+            mock_logger: Mock for logger.info function call.
         """
-        # TODO implement
-        pass
+        # Call the run_service function
+        self.service.run_service()
+
+        # Assert run_once is called exactly once
+        mock_run_once.assert_called_once()
+        # Assert logger.error is called with the correct message
+        mock_logger.error.assert_called_once_with(
+            msg="Got an unexpected error while running service: "
+            "Exception - Testing error."
+        )
+        # Assert logger.info is called with the correct message
+        mock_logger.info.assert_called_once_with(msg="Terminating continuous run.")
 
     @pytest.mark.unit
     def test_service_run_once(

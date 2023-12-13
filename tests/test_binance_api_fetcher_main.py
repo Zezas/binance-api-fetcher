@@ -30,7 +30,7 @@ class TestMain(TestCase):
         In this test we empty the argv and assert the default
         values and types returned by the parse_args_functions.
         """
-        # Execute the parse_args function
+        # Call the parse_args function
         args = parse_args()
 
         # Test args for default values
@@ -93,7 +93,7 @@ class TestMain(TestCase):
         monkeypatch.setenv(name="DATAPOINT_LIMIT", value="1000")
         monkeypatch.setenv(name="SHARD", value="1")
 
-        # Execute the parse_args function
+        # Call the parse_args function
         args = parse_args()
 
         # Assert args for non default values
@@ -145,12 +145,12 @@ class TestMain(TestCase):
         the logging.basicConfig with the expected configuration.
 
         Args:
-            mock_logging: Mock for logging.basicConfig().
+            mock_logging: Mock for logging.basicConfig function call.
         """
         # Set up logging_level
         logging_level: str = "debug"
 
-        # Execute the logging_level function
+        # Call the logging_level function
         logging_config(logging_level=logging_level)
 
         # Test logging.basicConfig is called once with the correct arguments
@@ -185,9 +185,9 @@ class TestMain(TestCase):
 
         Args:
             mock_service: Mock for Service class call.
-            mock_logger: Mock for logger.info().
-            mock_logging_config: Mock for logging_config().
-            mock_parse_args: Mock for parse_args().
+            mock_logger: Mock for logger.info function call.
+            mock_logging_config: Mock for logging_config function call.
+            mock_parse_args: Mock for parse_args function call.
         """
         # Set up the expected calls for the logger.info
         logger_info_expected_calls: Sequence = [
@@ -203,7 +203,7 @@ class TestMain(TestCase):
             ),
         ]
 
-        # Execute the main function
+        # Call the main function
         main()
 
         # Assert parse_args is called once

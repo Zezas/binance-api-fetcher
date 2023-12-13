@@ -148,41 +148,34 @@ class Service:
 
         # Run service according to configurtion
         if self._run_as_service:
+            logger.info(msg="Running the service continuosly.")
             self.run_service()
         else:
+            logger.info(msg="Running the service once.")
             self.run_once()
 
         # Tear down
         # self.tear_down()
 
     def run_service(self) -> None:
-        """Run the service as a continuous process.
+        """Run the service continuosly.
 
-        Polls the source every X seconds for new records.
-        Once new records are found, operations are applied to the "target" components.
+        Execute the run_once function continuosly, sleeping between iterations.
+        If an unexpected exception is caught, we stop the continuos loop.
         """
-        # TODO implment, including docstring
-        pass  # pragma: no cover
+        while True:
+            try:
+                self.run_once()
 
-    #     logger.info(
-    #         f"Running as a service. "
-    #         f"source_polling_interval=[{self._min_sleep},{self._max_sleep}]."
-    #     )
+            # If we catch an unexpected exception, we exit
+            except Exception as error:
+                logger.error(
+                    msg="Got an unexpected error while running service: "
+                    f"{type(error).__name__} - {error}."
+                )
+                break
 
-    #     continue_watching_folder = True
-    #     while continue_watching_folder:
-    #         try:
-    #             self.run_once()
-    #             t = secrets.choice(
-    #                 [self._min_sleep, self._max_sleep]
-    #                 + [i for i in range(self._min_sleep, self._max_sleep)]
-    #             )
-    #             time.sleep(t)
-    #         except Exception as e:
-    #             logger.warning("error while importing:", e)
-    #             continue_watching_folder = False
-
-    #     logger.info("Terminating...")
+        logger.info(msg="Terminating continuous run.")
 
     def run_once(self) -> None:
         """Run the process once."""
