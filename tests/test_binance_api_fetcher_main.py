@@ -167,13 +167,13 @@ class TestMain(TestCase):
     @patch(target="binance_api_fetcher.__main__.__version__", new=TESTING_VERSION)
     @patch(target="binance_api_fetcher.__main__.parse_args")
     @patch(target="binance_api_fetcher.__main__.logging_config")
-    @patch(target="binance_api_fetcher.__main__.logger")
+    @patch(target="binance_api_fetcher.__main__.logger.info")
     @patch(target="binance_api_fetcher.__main__.Service")
     @pytest.mark.unit
     def test_main_run(
         self,
         mock_service: MagicMock,
-        mock_logger: MagicMock,
+        mock_logger_info: MagicMock,
         mock_logging_config: MagicMock,
         mock_parse_args: MagicMock,
     ) -> None:
@@ -185,7 +185,7 @@ class TestMain(TestCase):
 
         Args:
             mock_service: Mock for Service class call.
-            mock_logger: Mock for logger.info function call.
+            mock_logger_info: Mock for logger.info function call.
             mock_logging_config: Mock for logging_config function call.
             mock_parse_args: Mock for parse_args function call.
         """
@@ -214,9 +214,9 @@ class TestMain(TestCase):
         )
 
         # Assert logger.info has the expected calls in the right order
-        mock_logger.info.assert_has_calls(logger_info_expected_calls, any_order=False)
+        mock_logger_info.assert_has_calls(logger_info_expected_calls, any_order=False)
         # Assert logger.info has the expected number of calls
-        self.assertEqual(first=mock_logger.info.call_count, second=2)
+        self.assertEqual(first=mock_logger_info.call_count, second=2)
 
         # Assert service constructor is called once with the correct arguments
         mock_service.assert_called_once_with(args=mock_parse_args.return_value)

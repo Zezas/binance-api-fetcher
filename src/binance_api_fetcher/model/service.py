@@ -2,9 +2,7 @@
 
 import argparse
 import logging
-from typing import (
-    Dict,
-)
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class ServiceError(Exception):
-    """Raised when we have unexpected behaviour in the Service class."""
+    """Service error.
+
+    Raised when we have unexpected behaviour in the Service class.
+    """
 
     pass
 
@@ -170,8 +171,7 @@ class Service:
             # If we catch an unexpected exception, we exit
             except Exception as error:
                 logger.error(
-                    msg="Got an unexpected error while running service: "
-                    f"{type(error).__name__} - {error}."
+                    msg="Error running service: " f"{type(error).__name__} - {error}."
                 )
                 break
 

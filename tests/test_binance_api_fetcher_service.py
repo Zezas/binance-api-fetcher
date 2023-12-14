@@ -197,12 +197,12 @@ class TestService(TestCase):
         self._test_service_run_with_run_as_service()
         self._test_service_run_without_run_as_service()
 
-    @patch(target="binance_api_fetcher.model.service.logger")
+    @patch(target="binance_api_fetcher.model.service.logger.info")
     @patch.object(target=Service, attribute="run_service")
     def _test_service_run_with_run_as_service(
         self,
         mock_run_service: MagicMock,
-        mock_logger: MagicMock,
+        mock_logger_info: MagicMock,
     ) -> None:
         """Test the Service run function with run_as_service.
 
@@ -213,7 +213,7 @@ class TestService(TestCase):
 
         Args:
             mock_run_service: Mock for run_service function call.
-            mock_logger: Mock for logger.info function call.
+            mock_logger_info: Mock for logger.info function call.
         """
         # Save orignal value of run_as_service
         attr_original_value: bool = self.service._run_as_service
@@ -224,19 +224,19 @@ class TestService(TestCase):
         self.service.run()
 
         # Assert logger.info is called with the correct message
-        mock_logger.info.assert_called_once_with(msg="Running the service continuosly.")
+        mock_logger_info.assert_called_once_with(msg="Running the service continuosly.")
         # Assert run_service is called exactly once
         mock_run_service.assert_called_once()
 
         # Reset orignal value of run_as_service
         self.service._run_as_service = attr_original_value
 
-    @patch(target="binance_api_fetcher.model.service.logger")
+    @patch(target="binance_api_fetcher.model.service.logger.info")
     @patch.object(target=Service, attribute="run_once")
     def _test_service_run_without_run_as_service(
         self,
         mock_run_once: MagicMock,
-        mock_logger: MagicMock,
+        mock_logger_info: MagicMock,
     ) -> None:
         """Test the Service run function without run_as_service.
 
@@ -247,7 +247,7 @@ class TestService(TestCase):
 
         Args:
             mock_run_once: Mock for run_once function call.
-            mock_logger: Mock for logger.info function call.
+            mock_logger_info: Mock for logger.info function call.
         """
         # Save orignal value of run_as_service
         attr_original_value: bool = self.service._run_as_service
@@ -258,7 +258,7 @@ class TestService(TestCase):
         self.service.run()
 
         # Assert logger.info is called with the correct message
-        mock_logger.info.assert_called_once_with(msg="Running the service once.")
+        mock_logger_info.assert_called_once_with(msg="Running the service once.")
         # Assert run_once is called exactly once
         mock_run_once.assert_called_once()
 
@@ -280,11 +280,11 @@ class TestService(TestCase):
         Test if:
             1. The call to the run_once function is made;
             2. The call to the random_sleep function is made;
-            3. The Exception is raised.
+            3. The Exception is catched and a message is logged.
 
         Args:
             mock_run_once: Mock for run_once function call.
-            mock_logger: Mock for logger.info function call.
+            mock_logger: Mock for logger.info and logger.error function calls.
         """
         # Call the run_service function
         self.service.run_service()
@@ -293,8 +293,7 @@ class TestService(TestCase):
         mock_run_once.assert_called_once()
         # Assert logger.error is called with the correct message
         mock_logger.error.assert_called_once_with(
-            msg="Got an unexpected error while running service: "
-            "Exception - Testing error."
+            msg="Error running service: " "Exception - Testing error."
         )
         # Assert logger.info is called with the correct message
         mock_logger.info.assert_called_once_with(msg="Terminating continuous run.")
