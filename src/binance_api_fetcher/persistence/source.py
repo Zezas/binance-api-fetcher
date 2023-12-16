@@ -51,7 +51,7 @@ class Source:
         """Connect to data source.
 
         Make a "ping" request and validate the response status code.
-        Finally, log a success or failure message.
+        Finally, log a success message or raise an error if it fails.
 
         Raises:
             SourceError: Raised when an error occurs while

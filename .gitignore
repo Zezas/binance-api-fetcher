@@ -161,3 +161,8 @@ cython_debug/
 *.env
 *.zip
 .netrc
+
+# Robot Framework auto-generated files
+log.html
+output.xml
+report.html
