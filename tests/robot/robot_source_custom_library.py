@@ -1,6 +1,6 @@
 """Robot custom library for the Source class."""
 
-from binance_api_fetcher.persistence import Source
+from binance_api_fetcher.persistence import Source  # type: ignore
 
 
 def create_source_instance(connection_string: str) -> Source:
