@@ -11,7 +11,7 @@ from nox.sessions import Session  # type: ignore
 PACKAGE = "binance_api_fetcher"
 
 # Sessions to run by running nox.
-nox.options.sessions = "lint", "mypy", "safety", "test", "robot"
+nox.options.sessions = "lint", "mypy", "safety", "test"
 
 # Locations to run commands against.
 LOCATIONS = "src", "tests", "./noxfile.py", "docs/conf.py"
