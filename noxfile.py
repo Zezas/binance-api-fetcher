@@ -11,7 +11,7 @@ from nox.sessions import Session  # type: ignore
 PACKAGE = "binance_api_fetcher"
 
 # Sessions to run by running nox.
-nox.options.sessions = "lint", "mypy", "safety", "test"
+nox.options.sessions = "lint", "mypy", "safety", "test", "robot"
 
 # Locations to run commands against.
 LOCATIONS = "src", "tests", "./noxfile.py", "docs/conf.py"
@@ -250,6 +250,22 @@ def pytest_e2e(session: Session) -> None:
         "-m",
         "e2e",
         f"--typeguard-packages={PACKAGE}",
+        *args,
+    )
+
+
+@nox.session(name="robot", python=python_versions)
+def robot(session: Session) -> None:
+    """Run robot framework tests.
+
+    Args:
+        session: The Session object.
+    """
+    args = session.posargs or [".\\tests\\robot"]
+    session.install(".")
+    install_with_constraints(session, "robotframework", "robotframework-requests")
+    session.run(
+        "robot",
         *args,
     )
 
