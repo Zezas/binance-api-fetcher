@@ -27,3 +27,18 @@ def connect_to_source(source: Source) -> None:
         source: Source class instance.
     """
     source.connect()
+
+
+def check_if_source_is_connected(source: Source) -> bool:
+    """Check if Source component is connected to data source.
+
+    Return the value of the attribute that states if the source
+    instance received is connected or not.
+
+    Args:
+        source: Source class instance.
+
+    Returns:
+        bool: Source instance is_connected value.
+    """
+    return source.is_connected

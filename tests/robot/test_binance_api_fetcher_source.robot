@@ -4,9 +4,33 @@ Library           robot_source_custom_library.py
 
 *** Test Cases ***
 Test Source Connection - No Error
-    ${source}    Create Source Instance    https://api.binance.com/api/v3/
-    Connect To Source    ${source}
+    [Documentation]    Test that a Source instance can connect without errors.
+    Given Source Instance Is Created    https://api.binance.com/api/v3/
+    When Source Instance Connects Successfully
+    Then Source Connection Is Successful
 
 Test Source Connection - Error
-    ${source}    Create Source Instance    bad_connection_string
+    [Documentation]    Test that a Source instance throws an error with a bad connection string.
+    Given Source Instance Is Created    bad_connection_string
+    When Source Instance Connects Unsuccessfully
+    Then Source Connection Is Unsuccessful
+
+*** Keywords ***
+Given Source Instance Is Created
+    [Arguments]          ${connection_string}
+    ${source}            Create Source Instance    ${connection_string}
+    Set Test Variable    ${source}
+
+When Source Instance Connects Successfully
+    Connect To Source    ${source}
+
+When Source Instance Connects Unsuccessfully
     Run Keyword And Expect Error    SourceError: Error connecting to source: None - .    Connect To Source    ${source}
+
+Then Source Connection Is Successful
+    ${is_connected}      Check If Source Is Connected    ${source}
+    Should Be True       ${is_connected}
+
+Then Source Connection Is Unsuccessful
+    ${is_connected}      Check If Source Is Connected    ${source}
+    Should Not Be True   ${is_connected}

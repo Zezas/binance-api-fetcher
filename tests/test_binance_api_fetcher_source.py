@@ -53,6 +53,23 @@ class TestSource(TestCase):
             second=self.test_connection_string,
         )
         self.assertIsInstance(obj=self.source._url, cls=str)
+        # is_connected
+        self.assertFalse(expr=self.source._is_connected)
+        self.assertIsInstance(obj=self.source._is_connected, cls=bool)
+
+    @pytest.mark.unit
+    def test_source_is_connected(
+        self,
+    ) -> None:
+        """Test the Source connected property/function.
+
+        Test if:
+            1. Returns the expected value (in this test we expect it
+            to be False because that is the default value when a Source
+            instance is created).
+        """
+        # Assert is_connected has the expected value
+        self.assertFalse(expr=self.source.is_connected)
 
     @pytest.mark.unit
     def test_source_ping_url(
@@ -102,6 +119,9 @@ class TestSource(TestCase):
         # Assert request is called with the correct arguments
         mock_request.assert_called_once_with(url=self.source.ping_url)
 
+        # Assert is_connected attribute is True
+        self.assertTrue(expr=self.source._is_connected)
+
         # Assert logger.info is called with the correct message
         mock_logger_info.assert_called_with(
             msg=f"{self.source.__class__.__name__} " f"connected to: {self.source._url}"
@@ -140,6 +160,9 @@ class TestSource(TestCase):
 
         # Assert request is called with the correct arguments
         mock_request.assert_called_once_with(url=self.source.ping_url)
+
+        # Assert is_connected attribute is False
+        self.assertFalse(expr=self.source._is_connected)
 
         # Assert the error message
         self.assertEqual(
