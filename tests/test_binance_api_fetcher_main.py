@@ -7,7 +7,7 @@ from typing import Sequence
 from unittest import TestCase
 from unittest.mock import call, MagicMock, patch
 
-from binance_api_fetcher.__main__ import logging_config, main, parse_args
+from binance_api_fetcher.__main__ import logging_config, main, parse_args  # type: ignore
 import pytest
 from pytest import MonkeyPatch
 
@@ -148,14 +148,14 @@ class TestMain(TestCase):
             mock_logging: Mock for logging.basicConfig function call.
         """
         # Set up logging_level
-        logging_level: str = "debug"
+        test_logging_level: str = "debug"
 
         # Call the logging_level function
-        logging_config(logging_level=logging_level)
+        logging_config(logging_level=test_logging_level)
 
         # Test logging.basicConfig is called once with the correct arguments
         mock_logging.basicConfig.assert_called_once_with(
-            level=logging_level.upper(),
+            level=test_logging_level.upper(),
             format=(
                 "%(asctime)s.%(msecs)06d %(levelname)s "
                 "[%(filename)s:%(lineno)d] %(message)s"

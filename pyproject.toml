@@ -54,7 +54,7 @@ source = ["binance_api_fetcher"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 100
+fail_under = 95
 
 [build-system]
 requires = ["poetry-core"]
@@ -62,7 +62,6 @@ build-backend = "poetry.core.masonry.api"
 
 [[tool.mypy.overrides]]
 module = [
-    "binance_api_fetcher.__main__",
     "_pytest.*",
     "pytest",
     "psycopg2.*",

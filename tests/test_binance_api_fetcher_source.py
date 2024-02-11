@@ -3,7 +3,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from binance_api_fetcher.persistence import Source, SourceError
+from binance_api_fetcher.persistence import Source, SourceError  # type: ignore
 import pytest
 import requests
 from requests import Response
@@ -61,7 +61,7 @@ class TestSource(TestCase):
     def test_source_is_connected(
         self,
     ) -> None:
-        """Test the Source connected property/function.
+        """Test the Source is_connected property/function.
 
         Test if:
             1. Returns the expected value (in this test we expect it
@@ -92,7 +92,7 @@ class TestSource(TestCase):
     @patch(target="binance_api_fetcher.persistence.source.logger.info")
     @patch.object(target=Source, attribute="request")
     @pytest.mark.unit
-    def test_source_connect_without_error(
+    def test_source_connect_success(
         self,
         mock_request: MagicMock,
         mock_logger_info: MagicMock,
@@ -124,7 +124,7 @@ class TestSource(TestCase):
 
         # Assert logger.info is called with the correct message
         mock_logger_info.assert_called_with(
-            msg=f"{self.source.__class__.__name__} " f"connected to: {self.source._url}"
+            msg=f"{self.source.__class__.__name__} connected to: {self.source._url}."
         )
 
     @patch(target="binance_api_fetcher.persistence.source.logger.info")
@@ -179,7 +179,7 @@ class TestSource(TestCase):
     @patch(target="binance_api_fetcher.persistence.source.logger.warning")
     @patch(target="binance_api_fetcher.persistence.source.requests")
     @pytest.mark.unit
-    def test_source_request_without_error(
+    def test_source_request_success(
         self,
         mock_requests_get: MagicMock,
         mock_logger_warning: MagicMock,

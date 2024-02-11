@@ -2,6 +2,11 @@
 Documentation     This a test suite for the Source class.
 Library           robot_source_custom_library.py
 
+
+*** Variables ***
+${source}
+
+
 *** Test Cases ***
 Test Source Connection - No Error
     [Documentation]    Test that a Source instance can connect without errors.
@@ -16,21 +21,21 @@ Test Source Connection - Error
     Then Source Connection Is Unsuccessful
 
 *** Keywords ***
-Given Source Instance Is Created
+Source Instance Is Created
     [Arguments]          ${connection_string}
     ${source}            Create Source Instance    ${connection_string}
     Set Test Variable    ${source}
 
-When Source Instance Connects Successfully
+Source Instance Connects Successfully
     Connect To Source    ${source}
 
-When Source Instance Connects Unsuccessfully
+Source Instance Connects Unsuccessfully
     Run Keyword And Expect Error    SourceError: Error connecting to source: None - .    Connect To Source    ${source}
 
-Then Source Connection Is Successful
+Source Connection Is Successful
     ${is_connected}      Check If Source Is Connected    ${source}
     Should Be True       ${is_connected}
 
-Then Source Connection Is Unsuccessful
+Source Connection Is Unsuccessful
     ${is_connected}      Check If Source Is Connected    ${source}
     Should Not Be True   ${is_connected}

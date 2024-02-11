@@ -2,7 +2,7 @@
 
 from unittest import TestCase
 
-from binance_api_fetcher import __version__
+from binance_api_fetcher import __version__  # type: ignore
 import pytest
 
 
