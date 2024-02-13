@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 from binance_api_fetcher.persistence import Target, TargetError  # type: ignore
 import psycopg2
-from psycopg2.extensions import connection as Connection, cursor as Cursor
 import pytest
 
 
@@ -49,23 +48,21 @@ class TestTarget(TestCase):
             1. Attributes of the Target instance have the args
             received and default values assigned.
         """
-        # target_cursor
-        self.assertIsNone(obj=self.target._target_cursor)
         # connection_string
         self.assertEqual(
             first=self.target._connection_string,
             second=self.test_connection_string,
         )
         self.assertIsInstance(obj=self.target._connection_string, cls=str)
+        # is_connected
+        self.assertFalse(expr=self.target._is_connected)
+        self.assertIsInstance(obj=self.target._is_connected, cls=bool)
         # transaction_in_progress
         self.assertEqual(
             first=self.target._transaction_in_progress,
             second=False,
         )
         self.assertIsInstance(obj=self.target._transaction_in_progress, cls=bool)
-        # is_connected
-        self.assertFalse(expr=self.target._is_connected)
-        self.assertIsInstance(obj=self.target._is_connected, cls=bool)
 
     @pytest.mark.unit
     def test_target_is_connected(
@@ -78,157 +75,99 @@ class TestTarget(TestCase):
             to be False because that is the default value when a Target
             instance is created).
         """
+        # Change the value
+        self.target._is_connected = True
+        # Assert is_connected has the expected value
+        self.assertTrue(expr=self.target.is_connected)
+        # Change the value again
+        self.target._is_connected = False
         # Assert is_connected has the expected value
         self.assertFalse(expr=self.target.is_connected)
 
+    @patch(target="binance_api_fetcher.persistence.target.logger.debug")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
     @pytest.mark.unit
-    def test_target_cursor_with_transaction_in_progress_and_cursor(
+    def test_target_cursor_with_transaction_in_progress(
         self,
+        mock_psycopg2_connect: MagicMock,
+        mock_logger_debug: MagicMock,
     ) -> None:
         """Test the Target cursor property/function.
 
         Test if:
             1. Cursor returned is the same as the Target instance
             attribute.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+            mock_logger_debug: Mock for the logger.debug
+                function call.
         """
         # Set up attributes to meet conditions
         self.target._transaction_in_progress = True
-        self.target._target_cursor = MagicMock(spec=Cursor)
-        self.target._target_connection = MagicMock(spec=Connection)
+        self.target._target_connection = mock_psycopg2_connect.return_value
+        self.target._target_cursor = mock_psycopg2_connect.return_value.cursor
 
-        # Call the cursor property/function
+        # Call the function
         test_cursor = self.target.cursor
 
-        # Assert the if conditions
-        self.assertTrue(expr=self.target._transaction_in_progress)
-        self.assertIsNotNone(obj=self.target._target_cursor)
-        # Assert target cursor instance
-        self.assertIsInstance(obj=self.target._target_cursor, cls=Cursor)
-        # Assert that cursor was not called
-        self.target._target_connection.cursor.assert_not_called()
+        # Assert that the logger.debug is called with the correct message
+        mock_logger_debug.assert_called_with(msg="Using existing cursor.")
         # Assert that the test cursor is the same as the target_cursor
         self.assertEqual(first=test_cursor, second=self.target._target_cursor)
-        # Assert the test cursor instance
-        self.assertIsInstance(obj=test_cursor, cls=Cursor)
 
         # Tear Down - reset conditions that were set up for test
         self.target._transaction_in_progress = False
-        self.target._target_cursor = None
+        del self.target._target_connection
+        del self.target._target_cursor
 
+    @patch(target="binance_api_fetcher.persistence.target.logger.debug")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
     @pytest.mark.unit
-    def test_target_cursor_with_transaction_in_progress_and_no_cursor(self) -> None:
+    def test_target_cursor_without_transaction_in_progress(
+        self,
+        mock_psycopg2_connect: MagicMock,
+        mock_logger_debug: MagicMock,
+    ) -> None:
         """Test the Target cursor property/function.
 
         Test if:
             1. Cursor returned is a new cursor.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+            mock_logger_debug: Mock for the logger.debug
+                function call.
         """
         # Set up attributes to meet conditions
-        self.target._transaction_in_progress = True
-        self.target._target_cursor = None
-        self.target._target_connection = MagicMock(spec=Connection)
-        self.target._target_connection.cursor.return_value = MagicMock(spec=Cursor)
+        self.target._transaction_in_progress = False
+        self.target._target_connection = mock_psycopg2_connect.return_value
 
-        # Call the cursor property/function
+        # Call the function
         test_cursor = self.target.cursor
 
-        # Assert the if conditions
-        self.assertTrue(expr=self.target._transaction_in_progress)
-        self.assertIsNone(obj=self.target._target_cursor)
+        # Assert that the logger.debug is called with the correct message
+        mock_logger_debug.assert_called_with(msg="Creating new cursor.")
+        # Assert that the test cursor is the same as the return value of the cursor
+        # function called by target_connection
+        self.assertEqual(
+            first=test_cursor,
+            second=self.target._target_connection.cursor.return_value,
+        )
         # Assert that cursor is called once
         self.target._target_connection.cursor.assert_called_once()
-        # Assert that the test cursor is the same as the return value of the cursor
-        # function called by target_connection
-        self.assertEqual(
-            first=test_cursor, second=self.target._target_connection.cursor.return_value
-        )
-        # Assert that the test cursor is not the same as target_cursor
-        self.assertNotEqual(first=test_cursor, second=self.target._target_cursor)
-        # Assert the test cursor instance
-        self.assertIsInstance(obj=test_cursor, cls=Cursor)
 
         # Tear Down - reset conditions that were set up for test
-        self.target._transaction_in_progress = False
-        self.target._target_cursor = None
-        del self.target._target_connection
-
-    @pytest.mark.unit
-    def test_target_cursor_without_transaction_in_progress_and_cursor(self) -> None:
-        """Test the Target cursor property/function.
-
-        Test if:
-            1. Cursor returned is a new cursor.
-        """
-        # Set up attributes to meet conditions
-        self.target._transaction_in_progress = False
-        self.target._target_cursor = MagicMock(spec=Cursor)
-        self.target._target_connection = MagicMock(spec=Connection)
-        self.target._target_connection.cursor.return_value = MagicMock(spec=Cursor)
-
-        # Call the cursor property/function
-        test_cursor = self.target.cursor
-
-        # Assert the if conditions
-        self.assertFalse(expr=self.target._transaction_in_progress)
-        self.assertIsNotNone(obj=self.target._target_cursor)
-        # Assert attribute calls
-        self.target._target_cursor.assert_not_called()
-        # Assert that cursor is called once
-        self.target._target_connection.cursor.assert_called_once()
-        # Assert that the test cursor is the same as the return value of the cursor
-        # function called by target_connection
-        self.assertEqual(
-            first=test_cursor, second=self.target._target_connection.cursor.return_value
-        )
-        # Assert that the test cursor is not the same as target_cursor
-        self.assertNotEqual(first=test_cursor, second=self.target._target_cursor)
-        # Assert the test cursor instance
-        self.assertIsInstance(obj=test_cursor, cls=Cursor)
-
-        # Tear Down - reset conditions that were set up for test
-        self.target._transaction_in_progress = False
-        self.target._target_cursor = None
-        del self.target._target_connection
-
-    @pytest.mark.unit
-    def test_target_cursor_without_transaction_in_progress_and_no_cursor(self) -> None:
-        """Test the Target cursor property/function.
-
-        Test if:
-            1. Cursor returned is a new cursor.
-        """
-        # Set up attributes to meet conditions
-        self.target._transaction_in_progress = False
-        self.target._target_cursor = None
-        self.target._target_connection = MagicMock(spec=Connection)
-        self.target._target_connection.cursor.return_value = MagicMock(spec=Cursor)
-
-        # Call the cursor property/function
-        test_cursor = self.target.cursor
-
-        # Assert the if conditions
-        self.assertFalse(expr=self.target._transaction_in_progress)
-        self.assertIsNone(obj=self.target._target_cursor)
-        # Assert that cursor is called once
-        self.target._target_connection.cursor.assert_called()
-        # Assert that the test cursor is the same as the return value of the cursor
-        # function called by target_connection
-        self.assertEqual(
-            first=test_cursor, second=self.target._target_connection.cursor.return_value
-        )
-        # Assert that the test cursor is not the same as target_cursor
-        self.assertNotEqual(first=test_cursor, second=self.target._target_cursor)
-        # Assert the test cursor instance
-        self.assertIsInstance(obj=test_cursor, cls=Cursor)
-
-        # Tear Down - reset conditions that were set up for test
-        self.target._transaction_in_progress = False
-        self.target._target_cursor = None
         del self.target._target_connection
 
     @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
     @pytest.mark.unit
     def test_target_cursor_psycopg2_error_handling(
         self,
+        mock_psycopg2_connect: MagicMock,
         mock_logger_error: MagicMock,
     ) -> None:
         """Test the Target cursor property/function.
@@ -237,11 +176,13 @@ class TestTarget(TestCase):
             1. Psycopg2 Error is caught and handled.
 
         Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
             mock_logger_error: Mock for the logger.error
                 function call.
         """
         # Set up attributes to meet conditions
-        self.target._target_connection = MagicMock(spec=Connection)
+        self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_connection.cursor.side_effect = psycopg2.Error(
             "Testing error"
         )
@@ -254,7 +195,7 @@ class TestTarget(TestCase):
         self.target._target_connection.cursor.assert_called_once()
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
-            "Got a psycopg2 error while interacting with target datasource: "
+            msg="Got a psycopg2 error while interacting with target datasource: "
             "Error - Testing error."
         )
         # Assert that the TargetError logs the correct message
@@ -269,9 +210,11 @@ class TestTarget(TestCase):
         del self.target._target_connection
 
     @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
     @pytest.mark.unit
     def test_target_cursor_exception_error_handling(
         self,
+        mock_psycopg2_connect: MagicMock,
         mock_logger_error: MagicMock,
     ) -> None:
         """Test the Target cursor property/function.
@@ -280,11 +223,13 @@ class TestTarget(TestCase):
             1. Exception is caught and handled.
 
         Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
             mock_logger_error: Mock for the logger.error
                 function call.
         """
         # Set up attributes to meet conditions
-        self.target._target_connection = MagicMock(spec=Connection)
+        self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_connection.cursor.side_effect = Exception("Testing error")
 
         # Call the cursor property/function
@@ -295,7 +240,7 @@ class TestTarget(TestCase):
         self.target._target_connection.cursor.assert_called_once()
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
-            "Got an unexpected error while interacting with target datasource: "
+            msg="Got an unexpected error while interacting with target datasource: "
             "Exception - Testing error."
         )
         # Assert that the TargetError logs the correct message
@@ -332,6 +277,9 @@ class TestTarget(TestCase):
             mock_logger_info: Mock for the logger.error
                 function call.
         """
+        # Set up attributes to meet conditions
+        mock_cursor: MagicMock = mock_psycopg2_connect.return_value.cursor
+
         # Call the connect function
         self.target.connect()
 
@@ -339,24 +287,34 @@ class TestTarget(TestCase):
         mock_psycopg2_connect.assert_called_once_with(
             dsn=self.target._connection_string
         )
-        # Assert that target_connection has the value assigned connect is
-        # called with args
+        # Assert that target_connection has the value assigned
         self.assertEqual(
             first=self.target._target_connection,
             second=mock_psycopg2_connect.return_value,
         )
         # Assert that the autocommit attribute is set correctly
         self.assertFalse(expr=self.target._target_connection.autocommit)
+        # Assert that the mock_cursor is called once
+        mock_cursor.assert_called_once()
+        # Assert that target_cursor has the value assigned
+        self.assertEqual(
+            first=self.target._target_cursor,
+            second=mock_cursor.return_value,
+        )
         # Assert that ping_datasoruce is called once
         mock_ping_datasource.assert_called_once()
-        # Assert that the autocommit attribute is set correctly
+        # Assert is_connected has the expected value
+        self.assertTrue(expr=self.target.is_connected)
+        # Assert that the log is called correctly
         mock_logger_info.assert_called_with(
-            f"{self.target.__class__.__name__} connected to: "
+            msg=f"{self.target.__class__.__name__} connected to: "
             f"{mock_ping_datasource.return_value}."
         )
 
         # Tear Down - reset conditions that were updated for test
+        self.target._is_connected = False
         del self.target._target_connection
+        del self.target._target_cursor
 
     @patch(target="binance_api_fetcher.persistence.target.logger.error")
     @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
@@ -390,7 +348,7 @@ class TestTarget(TestCase):
         )
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
-            "Got a psycopg2 error while interacting with target datasource: "
+            msg="Got a psycopg2 error while interacting with target datasource: "
             "Error - Testing error."
         )
         # Assert that the TargetError logs the correct message
@@ -433,7 +391,7 @@ class TestTarget(TestCase):
         )
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
-            "Got an unexpected error while interacting with target datasource: "
+            msg="Got an unexpected error while interacting with target datasource: "
             "Exception - Testing error."
         )
         # Assert that the TargetError logs the correct message
@@ -559,7 +517,7 @@ class TestTarget(TestCase):
         )
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
-            "Got a psycopg2 error while interacting with target datasource: "
+            msg="Got a psycopg2 error while interacting with target datasource: "
             "Error - Testing error."
         )
         # Assert that the TargetError logs the correct message
@@ -607,7 +565,7 @@ class TestTarget(TestCase):
         )
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
-            "Got an unexpected error while interacting with target datasource: "
+            msg="Got an unexpected error while interacting with target datasource: "
             "Exception - Testing error."
         )
         # Assert that the TargetError logs the correct message

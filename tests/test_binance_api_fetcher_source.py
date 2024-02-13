@@ -254,7 +254,7 @@ class TestSource(TestCase):
 
         # Assert logger.warning is called with the correct message
         mock_logger_warning.assert_called_with(
-            "Error making request: " "RequestException - Testing error."
+            msg="Error making request: " "RequestException - Testing error."
         )
 
         # Assert the response returned is stil a requests.Response

@@ -27,13 +27,13 @@ class Target:
     # Connection to the data source
     _target_connection: Connection
     # Cursor for the data source
-    _target_cursor: Optional[Cursor]
+    _target_cursor: Cursor
     # String with the definitions to connect to the data source
     _connection_string: str
-    # Bool to know if a transaction is in progress
-    _transaction_in_progress: bool
     # Bool to know if connection to target is exists
     _is_connected: bool
+    # Bool to know if a transaction is in progress
+    _transaction_in_progress: bool
 
     def __init__(self, connection_string: str) -> None:
         """Initialize target components.
@@ -44,10 +44,9 @@ class Target:
         Args:
             connection_string: Definitions to connect with data source.
         """
-        self._target_cursor = None
         self._connection_string: str = connection_string
-        self._transaction_in_progress: bool = False
         self._is_connected = False
+        self._transaction_in_progress: bool = False
 
     @property
     def is_connected(self) -> bool:
@@ -73,23 +72,23 @@ class Target:
             TargetError: Raised when an error occurs while
                 connecting to target.
         """
-        # TODO needs coverage improvement
         try:
-            if self._transaction_in_progress and self._target_cursor is not None:
-                cursor: Cursor = self._target_cursor
-            else:
-                cursor = self._target_connection.cursor()
+            if self._transaction_in_progress:
+                logger.debug(msg="Using existing cursor.")
+                return self._target_cursor
 
-            return cursor
+            logger.debug(msg="Creating new cursor.")
+            return self._target_connection.cursor()
         except psycopg2.Error as error:
             logger.error(
-                f"Got a psycopg2 error while interacting with target datasource: "
+                msg=f"Got a psycopg2 error while interacting with target datasource: "
                 f"{type(error).__name__} - {error}."
             )
             raise TargetError("Got an error getting the postgres cursor.") from error
         except Exception as error:
             logger.error(
-                f"Got an unexpected error while interacting with target datasource: "
+                msg=f"Got an unexpected error while "
+                "interacting with target datasource: "
                 f"{type(error).__name__} - {error}."
             )
             raise TargetError("Got an error getting the postgres cursor.") from error
@@ -97,21 +96,27 @@ class Target:
     def connect(self) -> None:
         """Connects to target datasource.
 
-        After connecting, set the autocommit to False and ping
-        the datasource in order to confirm the connection is successful.
+        After connecting, set the autocommit to False, create a default cursor
+        and ping the datasource in order to confirm the connection is successful.
 
         Raises:
             TargetError: Raised when an error occurs while
                 connecting to target.
         """
         try:
+            # Set up the connection
             self._target_connection = psycopg2.connect(dsn=self._connection_string)
             self._target_connection.autocommit = False
+            # Create a default cursor
+            self._target_cursor = self._target_connection.cursor()
+            # Ping the datasource
             url: str = self.ping_datasource()
-            logger.info(f"{self.__class__.__name__} connected to: {url}.")
+            # Connection is successful
+            self._is_connected = True
+            logger.info(msg=f"{self.__class__.__name__} connected to: {url}.")
         except psycopg2.Error as error:
             logger.error(
-                f"Got a psycopg2 error while interacting with target datasource: "
+                msg=f"Got a psycopg2 error while interacting with target datasource: "
                 f"{type(error).__name__} - {error}."
             )
             raise TargetError(
@@ -119,7 +124,8 @@ class Target:
             ) from error
         except Exception as error:
             logger.error(
-                f"Got an unexpected error while interacting with target datasource: "
+                msg=f"Got an unexpected error while "
+                "interacting with target datasource: "
                 f"{type(error).__name__} - {error}."
             )
             raise TargetError(
@@ -154,13 +160,14 @@ class Target:
             return ping_response
         except psycopg2.Error as error:
             logger.error(
-                f"Got a psycopg2 error while interacting with target datasource: "
+                msg=f"Got a psycopg2 error while interacting with target datasource: "
                 f"{type(error).__name__} - {error}."
             )
             raise TargetError("Got an error pinging the target datasource.") from error
         except Exception as error:
             logger.error(
-                f"Got an unexpected error while interacting with target datasource: "
+                msg=f"Got an unexpected error while "
+                "interacting with target datasource: "
                 f"{type(error).__name__} - {error}."
             )
             raise TargetError("Got an error pinging the target datasource.") from error

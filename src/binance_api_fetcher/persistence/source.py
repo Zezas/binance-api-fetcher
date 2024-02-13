@@ -104,7 +104,7 @@ class Source:
 
         except requests.exceptions.RequestException as request_error:
             logger.warning(
-                "Error making request: "
+                msg="Error making request: "
                 f"{type(request_error).__name__} - {request_error}."
             )
             return requests.Response()
