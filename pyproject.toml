@@ -54,7 +54,7 @@ source = ["binance_api_fetcher"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 95
+fail_under = 100
 
 [build-system]
 requires = ["poetry-core"]

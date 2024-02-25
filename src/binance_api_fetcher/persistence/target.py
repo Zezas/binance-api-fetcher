@@ -70,7 +70,7 @@ class Target:
 
         Raises:
             TargetError: Raised when an error occurs while
-                connecting to target.
+                interacting with target.
         """
         try:
             if self._transaction_in_progress:
@@ -101,12 +101,11 @@ class Target:
 
         Raises:
             TargetError: Raised when an error occurs while
-                connecting to target.
+                interacting with target.
         """
         try:
             # Set up the connection
             self._target_connection = psycopg2.connect(dsn=self._connection_string)
-            self._target_connection.autocommit = False
             # Create a default cursor
             self._target_cursor = self._target_connection.cursor()
             # Ping the datasource
@@ -137,16 +136,17 @@ class Target:
 
         Query the target datasource to fetch the connection
         information, to make sure the connection to the target
-        datasource is  successful.
+        datasource is successful.
 
         Returns:
             str: String with target datasource connection information.
 
         Raises:
             TargetError: Raised when an error occurs while
-                connecting to target.
+                interacting with target.
         """
         try:
+            # self.begin_transaction()
             cursor: Cursor = self.cursor
             cursor.execute(
                 "SELECT CONCAT("
@@ -155,6 +155,8 @@ class Target:
                 ") as v"
             )
             result: Optional[Tuple] = cursor.fetchone()
+            # self.commit_transaction()
+
             ping_response: str = result[0] if result is not None else ""
 
             return ping_response
@@ -172,15 +174,47 @@ class Target:
             )
             raise TargetError("Got an error pinging the target datasource.") from error
 
-    # def begin_transaction(self) -> None:
-    #     """Begins a transaction."""
-    #     self._cursor = self.cursor
-    #     self._in_progress = True
+    def begin_transaction(self) -> None:
+        """Begins a transaction.
 
-    # def commit_transaction(self) -> None:
-    #     """Commits a transaction."""
-    #     self._connection.commit()
-    #     self._in_progress = False
+        By default, with psycopg2 the BEGIN TRANSACTION statement is always
+        executed. So in this function, we just need to create make sure a cursor
+        is attributed to our object's cursor, and set the in_progress control
+        attribute to true.
+        """
+        self._cursor = self.cursor
+        self._in_progress = True
+
+    def commit_transaction(self) -> None:
+        """Commits a transaction.
+
+        Call the commit function of the psycopg2 library and
+        set the in_progress control attribute to false.
+
+        Raises:
+            TargetError: Raised when an error occurs while
+                interacting with target.
+        """
+        try:
+            self._target_connection.commit()
+            self._in_progress = False
+        except psycopg2.Error as error:
+            logger.error(
+                msg=f"Got a psycopg2 error while interacting with target datasource: "
+                f"{type(error).__name__} - {error}."
+            )
+            raise TargetError(
+                "Got an error commiting a transaction in the target datasource."
+            ) from error
+        except Exception as error:
+            logger.error(
+                msg=f"Got an unexpected error while "
+                "interacting with target datasource: "
+                f"{type(error).__name__} - {error}."
+            )
+            raise TargetError(
+                "Got an error commiting a transaction in the target datasource."
+            ) from error
 
     # def rollback_transaction(self) -> None:
     #     """Rolls back a transaction."""

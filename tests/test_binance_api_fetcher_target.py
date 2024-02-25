@@ -292,8 +292,6 @@ class TestTarget(TestCase):
             first=self.target._target_connection,
             second=mock_psycopg2_connect.return_value,
         )
-        # Assert that the autocommit attribute is set correctly
-        self.assertFalse(expr=self.target._target_connection.autocommit)
         # Assert that the mock_cursor is called once
         mock_cursor.assert_called_once()
         # Assert that target_cursor has the value assigned
@@ -575,3 +573,154 @@ class TestTarget(TestCase):
         )
         # Assert the exception chaining (because we are already in Python 3.12)
         self.assertIsInstance(obj=context.exception.__cause__, cls=Exception)
+
+    @patch.object(target=Target, attribute="cursor", new_callable=PropertyMock)
+    @pytest.mark.unit
+    def test_target_begin_transaction(
+        self,
+        mock_cursor: MagicMock,
+    ) -> None:
+        """Test the Target begin  transaction function.
+
+        Test if:
+            1. A cursor is set as an attribute of target and
+            the in progress control attribute is set to True.
+
+        Args:
+            mock_cursor: Mock for the cursor
+                property/function call.
+        """
+        # Call the ping_datasource function
+        self.target.begin_transaction()
+
+        # Assert that mock_cursor is called once
+        mock_cursor.assert_called_once()
+        # Assert that execute is called with args
+        self.assertEqual(first=self.target._cursor, second=mock_cursor.return_value)
+        # Assert that in_progress is set to True
+        self.assertTrue(expr=self.target._in_progress)
+
+        # Restore default values
+        self.target._in_progress = False
+
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
+    @pytest.mark.unit
+    def test_target_commit_transaction(
+        self,
+        mock_psycopg2_connect: MagicMock,
+    ) -> None:
+        """Test the Target commit transaction function.
+
+        Test if:
+            1. Transaction is committed, i.e. the psycopg2 function
+            is called and the in_progress attribute is set to False.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+        """
+        # Set up attributes to meet conditions
+        self.target._target_connection = mock_psycopg2_connect.return_value
+
+        # Call the function
+        self.target.commit_transaction()
+
+        # Assert that commit is called once
+        self.target._target_connection.commit.assert_called_once()
+        # Assert that in_progress is set to False
+        self.assertFalse(expr=self.target._in_progress)
+
+        # Tear Down - reset conditions that were set up for test
+        del self.target._target_connection
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
+    @pytest.mark.unit
+    def test_target_commit_transaction_psycopg2_error_handling(
+        self,
+        mock_psycopg2_connect: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target commit transaction function.
+
+        Test if:
+            1. Psycopg2 Error is caught and handled.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        self.target._target_connection = mock_psycopg2_connect.return_value
+        self.target._target_connection.commit.side_effect = psycopg2.Error(
+            "Testing error"
+        )
+
+        # Call the commit transaction function
+        with self.assertRaises(TargetError) as context:
+            self.target.commit_transaction()
+
+        # Assert that commit is called once
+        self.target._target_connection.commit.assert_called_once()
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got a psycopg2 error while interacting with target datasource: "
+            "Error - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error commiting a transaction in the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=psycopg2.Error)
+
+        # Tear Down - reset conditions that were set up for test
+        del self.target._target_connection
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
+    @pytest.mark.unit
+    def test_target_commit_transaction_exception_error_handling(
+        self,
+        mock_psycopg2_connect: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target commit transaction function.
+
+        Test if:
+            1. Exception is caught and handled.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        self.target._target_connection = mock_psycopg2_connect.return_value
+        self.target._target_connection.commit.side_effect = Exception("Testing error")
+
+        # Call the cursor property/function
+        with self.assertRaises(TargetError) as context:
+            self.target.commit_transaction()
+
+        # Assert that cursor is called once
+        self.target._target_connection.commit.assert_called_once()
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got an unexpected error while interacting with target datasource: "
+            "Exception - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error commiting a transaction in the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=Exception)
+
+        # Tear Down - reset conditions that were set up for test
+        del self.target._target_connection
