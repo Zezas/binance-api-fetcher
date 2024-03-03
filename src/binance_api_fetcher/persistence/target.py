@@ -216,10 +216,36 @@ class Target:
                 "Got an error commiting a transaction in the target datasource."
             ) from error
 
-    # def rollback_transaction(self) -> None:
-    #     """Rolls back a transaction."""
-    #     self._connection.rollback()
-    #     self._in_progress = False
+    def rollback_transaction(self) -> None:
+        """Rolls back a transaction.
+
+        Call the rollback function of the psycopg2 library and
+        set the in_progress control attribute to false.
+
+        Raises:
+            TargetError: Raised when an error occurs while
+                interacting with target.
+        """
+        try:
+            self._target_connection.rollback()
+            self._in_progress = False
+        except psycopg2.Error as error:
+            logger.error(
+                msg=f"Got a psycopg2 error while interacting with target datasource: "
+                f"{type(error).__name__} - {error}."
+            )
+            raise TargetError(
+                "Got an error rolling back a transaction in the target datasource."
+            ) from error
+        except Exception as error:
+            logger.error(
+                msg=f"Got an unexpected error while "
+                "interacting with target datasource: "
+                f"{type(error).__name__} - {error}."
+            )
+            raise TargetError(
+                "Got an error rolling back a transaction in the target datasource."
+            ) from error
 
     # def disconnect(self) -> None:
     #     """Disconnects data source connection."""

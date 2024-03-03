@@ -500,7 +500,7 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         mock_cursor.return_value.execute.side_effect = psycopg2.Error("Testing error")
 
-        # Call the connect function
+        # Call the ping datasource function
         with self.assertRaises(TargetError) as context:
             self.target.ping_datasource()
 
@@ -548,7 +548,7 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         mock_cursor.return_value.execute.side_effect = Exception("Testing error")
 
-        # Call the connect function
+        # Call the ping datasource function
         with self.assertRaises(TargetError) as context:
             self.target.ping_datasource()
 
@@ -590,7 +590,7 @@ class TestTarget(TestCase):
             mock_cursor: Mock for the cursor
                 property/function call.
         """
-        # Call the ping_datasource function
+        # Call the begin transaction function
         self.target.begin_transaction()
 
         # Assert that mock_cursor is called once
@@ -662,7 +662,7 @@ class TestTarget(TestCase):
         with self.assertRaises(TargetError) as context:
             self.target.commit_transaction()
 
-        # Assert that commit is called once
+        # Assert that commit trannsaction is called once
         self.target._target_connection.commit.assert_called_once()
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
@@ -703,11 +703,11 @@ class TestTarget(TestCase):
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_connection.commit.side_effect = Exception("Testing error")
 
-        # Call the cursor property/function
+        # Call the commit transaction function
         with self.assertRaises(TargetError) as context:
             self.target.commit_transaction()
 
-        # Assert that cursor is called once
+        # Assert that commit transaction is called once
         self.target._target_connection.commit.assert_called_once()
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
@@ -718,6 +718,128 @@ class TestTarget(TestCase):
         self.assertEqual(
             first=str(context.exception),
             second="Got an error commiting a transaction in the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=Exception)
+
+        # Tear Down - reset conditions that were set up for test
+        del self.target._target_connection
+
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
+    @pytest.mark.unit
+    def test_target_rollback_transaction(
+        self,
+        mock_psycopg2_connect: MagicMock,
+    ) -> None:
+        """Test the Target rollback transaction function.
+
+        Test if:
+            1. Transaction is committed, i.e. the psycopg2 function
+            is called and the in_progress attribute is set to False.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+        """
+        # Set up attributes to meet conditions
+        self.target._target_connection = mock_psycopg2_connect.return_value
+
+        # Call the function
+        self.target.rollback_transaction()
+
+        # Assert that rollback transaction is called once
+        self.target._target_connection.rollback.assert_called_once()
+        # Assert that in_progress is set to False
+        self.assertFalse(expr=self.target._in_progress)
+
+        # Tear Down - reset conditions that were set up for test
+        del self.target._target_connection
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
+    @pytest.mark.unit
+    def test_target_rollback_transaction_psycopg2_error_handling(
+        self,
+        mock_psycopg2_connect: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target rollback transaction function.
+
+        Test if:
+            1. Psycopg2 Error is caught and handled.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        self.target._target_connection = mock_psycopg2_connect.return_value
+        self.target._target_connection.rollback.side_effect = psycopg2.Error(
+            "Testing error"
+        )
+
+        # Call the rollback transaction function
+        with self.assertRaises(TargetError) as context:
+            self.target.rollback_transaction()
+
+        # Assert that rollback transaction is called once
+        self.target._target_connection.rollback.assert_called_once()
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got a psycopg2 error while interacting with target datasource: "
+            "Error - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error rolling back a transaction in the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=psycopg2.Error)
+
+        # Tear Down - reset conditions that were set up for test
+        del self.target._target_connection
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
+    @pytest.mark.unit
+    def test_target_rollback_transaction_exception_error_handling(
+        self,
+        mock_psycopg2_connect: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target rollback transaction function.
+
+        Test if:
+            1. Exception is caught and handled.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        self.target._target_connection = mock_psycopg2_connect.return_value
+        self.target._target_connection.rollback.side_effect = Exception("Testing error")
+
+        # Call the rollback transaction function
+        with self.assertRaises(TargetError) as context:
+            self.target.rollback_transaction()
+
+        # Assert that rollback transaction is called once
+        self.target._target_connection.rollback.assert_called_once()
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got an unexpected error while interacting with target datasource: "
+            "Exception - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error rolling back a transaction in the target datasource.",
         )
         # Assert the exception chaining (because we are already in Python 3.12)
         self.assertIsInstance(obj=context.exception.__cause__, cls=Exception)
