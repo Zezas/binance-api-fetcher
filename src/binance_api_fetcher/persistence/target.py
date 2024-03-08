@@ -132,7 +132,7 @@ class Target:
             ) from error
 
     def ping_datasource(self) -> str:
-        """Pings data source.
+        """Pings datasource.
 
         Query the target datasource to fetch the connection
         information, to make sure the connection to the target
@@ -183,7 +183,7 @@ class Target:
         attribute to true.
         """
         self._cursor = self.cursor
-        self._in_progress = True
+        self._transaction_in_progress = True
 
     def commit_transaction(self) -> None:
         """Commits a transaction.
@@ -197,7 +197,7 @@ class Target:
         """
         try:
             self._target_connection.commit()
-            self._in_progress = False
+            self._transaction_in_progress = False
         except psycopg2.Error as error:
             logger.error(
                 msg=f"Got a psycopg2 error while interacting with target datasource: "
@@ -228,7 +228,7 @@ class Target:
         """
         try:
             self._target_connection.rollback()
-            self._in_progress = False
+            self._transaction_in_progress = False
         except psycopg2.Error as error:
             logger.error(
                 msg=f"Got a psycopg2 error while interacting with target datasource: "
@@ -247,12 +247,41 @@ class Target:
                 "Got an error rolling back a transaction in the target datasource."
             ) from error
 
-    # def disconnect(self) -> None:
-    #     """Disconnects data source connection."""
-    #     url = self.ping_datasource()
-    #     self._connection.close()
-    #     self._in_progress = False
-    #     logger.info(f"{self.__class__.__name__} disconnected from: {url}")
+    def disconnect(self) -> None:
+        """Disconnects from target datasource.
+
+        Ping the datasource to fetch the connection information, close the
+        cursor, disconnect from the target datasource and set the control
+        attributes to False.
+
+        Raises:
+            TargetError: Raised when an error occurs while
+                interacting with target.
+        """
+        try:
+            url = self.ping_datasource()
+            self._target_cursor.close()
+            self._target_connection.close()
+            self._transaction_in_progress = False
+            self._is_connected = False
+            logger.info(msg=f"{self.__class__.__name__} disconnected from: {url}.")
+        except psycopg2.Error as error:
+            logger.error(
+                msg=f"Got a psycopg2 error while interacting with target datasource: "
+                f"{type(error).__name__} - {error}."
+            )
+            raise TargetError(
+                "Got an error disconnecting from the target datasource."
+            ) from error
+        except Exception as error:
+            logger.error(
+                msg=f"Got an unexpected error while "
+                "interacting with target datasource: "
+                f"{type(error).__name__} - {error}."
+            )
+            raise TargetError(
+                "Got an error disconnecting from the target datasource."
+            ) from error
 
     # def get_next_delivery_id(self) -> int:
     #     """Gets next delivery id.
