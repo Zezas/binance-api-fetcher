@@ -33,7 +33,7 @@ class TestTarget(TestCase):
         """
         # Create a connection string used by the target
         self.test_connection_string: str = (
-            "user=username password=password " "host=localhost port=5432 dbname=binance"
+            "user=username password=password host=localhost port=5432 dbname=binance"
         )
         # Set up a Target instance for all tests (call the __init__ function)
         self.target = Target(connection_string=self.test_connection_string)
@@ -873,16 +873,20 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
+        mock_cursor_close = self.target._target_cursor.close
+        mock_connection_close = self.target._target_connection.close
+        self.target._transaction_in_progress = True
+        self.target._is_connected = True
 
         # Call the disconnect function
         self.target.disconnect()
 
         # Assert that ping_datasoruce is called once
         mock_ping_datasource.assert_called_once()
-        # Assert that the  is called once
-        self.target._target_cursor.close.assert_called_once()
-        # Assert that psycopg2 connect is called with args
-        self.target._target_connection.close.assert_called_once()
+        # Assert that cursor close called once
+        mock_cursor_close.assert_called_once()
+        # Assert that connect close is called with args
+        mock_connection_close.assert_called_once()
         # Assert transaction_in_progress has the expected value
         self.assertFalse(expr=self.target._transaction_in_progress)
         # Assert is_connected has the expected value
@@ -894,31 +898,40 @@ class TestTarget(TestCase):
         )
 
         # Tear Down - reset conditions that were updated for test
+        self.target._transaction_in_progress = False
         self.target._is_connected = False
         del self.target._target_connection
         del self.target._target_cursor
 
     @patch(target="binance_api_fetcher.persistence.target.logger.error")
     @patch.object(target=Target, attribute="ping_datasource")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
     @pytest.mark.unit
-    def test_target_disconnect_psycopg2_error_handling(
+    def test_target_disconnect_cursor_close_psycopg2_error_handling(
         self,
+        mock_psycopg2_connect: MagicMock,
         mock_ping_datasource: MagicMock,
         mock_logger_error: MagicMock,
     ) -> None:
         """Test the Target disconnect function.
 
         Test if:
-            1. Psycopg2 Error is caught and handled.
+            1. Psycopg2 Error is caught and handled cursor
+            close function is called.
 
         Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
             mock_ping_datasource: Mock for the ping_datasource
                 function call.
             mock_logger_error: Mock for the logger.error
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_ping_datasource.side_effect = psycopg2.Error("Testing error")
+        self.target._target_connection = mock_psycopg2_connect.return_value
+        self.target._target_cursor = self.target._target_connection.cursor.return_value
+        mock_cursor_close = self.target._target_cursor.close
+        mock_cursor_close.side_effect = psycopg2.Error("Testing error")
 
         # Call the disconnect function
         with self.assertRaises(TargetError) as context:
@@ -926,6 +939,8 @@ class TestTarget(TestCase):
 
         # Assert that ping_datasource is called
         mock_ping_datasource.assert_called_once()
+        # Assert that cursor.close is called
+        mock_cursor_close.assert_called_once()
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
             msg="Got a psycopg2 error while interacting with target datasource: "
@@ -939,27 +954,39 @@ class TestTarget(TestCase):
         # Assert the exception chaining (because we are already in Python 3.12)
         self.assertIsInstance(obj=context.exception.__cause__, cls=psycopg2.Error)
 
+        # Tear Down - reset conditions that were updated for test
+        del self.target._target_connection
+        del self.target._target_cursor
+
     @patch(target="binance_api_fetcher.persistence.target.logger.error")
     @patch.object(target=Target, attribute="ping_datasource")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
     @pytest.mark.unit
-    def test_target_disconnect_exception_error_handling(
+    def test_target_disconnect_cursor_close_exception_error_handling(
         self,
+        mock_psycopg2_connect: MagicMock,
         mock_ping_datasource: MagicMock,
         mock_logger_error: MagicMock,
     ) -> None:
         """Test the Target disconnect function.
 
         Test if:
-            1. Exception is caught and handled.
+            1. Exception is caught and handled cursor
+            close function is called.
 
         Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
             mock_ping_datasource: Mock for the ping_datasource
                 function call.
             mock_logger_error: Mock for the logger.error
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_ping_datasource.side_effect = Exception("Testing error")
+        self.target._target_connection = mock_psycopg2_connect.return_value
+        self.target._target_cursor = self.target._target_connection.cursor.return_value
+        mock_cursor_close = self.target._target_cursor.close
+        mock_cursor_close.side_effect = Exception("Testing error")
 
         # Call the disconnect function
         with self.assertRaises(TargetError) as context:
@@ -967,6 +994,8 @@ class TestTarget(TestCase):
 
         # Assert that ping datasource is called
         mock_ping_datasource.assert_called_once()
+        # Assert that cursor.close is called
+        mock_cursor_close.assert_called_once()
         # Assert that the logger.error is called with the correct message
         mock_logger_error.assert_called_with(
             msg="Got an unexpected error while interacting with target datasource: "
@@ -979,3 +1008,123 @@ class TestTarget(TestCase):
         )
         # Assert the exception chaining (because we are already in Python 3.12)
         self.assertIsInstance(obj=context.exception.__cause__, cls=Exception)
+
+        # Tear Down - reset conditions that were updated for test
+        del self.target._target_connection
+        del self.target._target_cursor
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch.object(target=Target, attribute="ping_datasource")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
+    @pytest.mark.unit
+    def test_target_disconnect_connection_close_psycopg2_error_handling(
+        self,
+        mock_psycopg2_connect: MagicMock,
+        mock_ping_datasource: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target disconnect function.
+
+        Test if:
+            1. Psycopg2 Error is caught and handled when connection
+            close function is called.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+            mock_ping_datasource: Mock for the ping_datasource
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        self.target._target_connection = mock_psycopg2_connect.return_value
+        self.target._target_cursor = self.target._target_connection.cursor.return_value
+        mock_cursor_close = self.target._target_cursor.close
+        mock_connection_close = self.target._target_connection.close
+        mock_connection_close.side_effect = psycopg2.Error("Testing error")
+
+        # Call the disconnect function
+        with self.assertRaises(TargetError) as context:
+            self.target.disconnect()
+
+        # Assert that ping_datasource is called
+        mock_ping_datasource.assert_called_once()
+        # Assert that cursor.close is called
+        mock_cursor_close.assert_called_once()
+        # Assert that connection.close is called
+        mock_connection_close.assert_called_once()
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got a psycopg2 error while interacting with target datasource: "
+            "Error - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error disconnecting from the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=psycopg2.Error)
+
+        # Tear Down - reset conditions that were updated for test
+        del self.target._target_connection
+        del self.target._target_cursor
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch.object(target=Target, attribute="ping_datasource")
+    @patch(target="binance_api_fetcher.persistence.target.psycopg2.connect")
+    @pytest.mark.unit
+    def test_target_disconnect_connection_close_exception_error_handling(
+        self,
+        mock_psycopg2_connect: MagicMock,
+        mock_ping_datasource: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target disconnect function.
+
+        Test if:
+            1. Exception is caught and handled connection
+            close function is called.
+
+        Args:
+            mock_psycopg2_connect: Mock for the psycopg2 connect
+                function call.
+            mock_ping_datasource: Mock for the ping_datasource
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        self.target._target_connection = mock_psycopg2_connect.return_value
+        self.target._target_cursor = self.target._target_connection.cursor.return_value
+        mock_cursor_close = self.target._target_cursor.close
+        mock_connection_close = self.target._target_connection.close
+        mock_connection_close.side_effect = Exception("Testing error")
+
+        # Call the disconnect function
+        with self.assertRaises(TargetError) as context:
+            self.target.disconnect()
+
+        # Assert that ping datasource is called
+        mock_ping_datasource.assert_called_once()
+        # Assert that cursor.close is called
+        mock_cursor_close.assert_called_once()
+        # Assert that connection.close is called
+        self.target._target_connection.close.assert_called_once()
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got an unexpected error while interacting with target datasource: "
+            "Exception - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error disconnecting from the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=Exception)
+
+        # Tear Down - reset conditions that were updated for test
+        del self.target._target_connection
+        del self.target._target_cursor
