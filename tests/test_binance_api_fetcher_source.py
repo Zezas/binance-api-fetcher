@@ -64,11 +64,14 @@ class TestSource(TestCase):
         """Test the Source is_connected property/function.
 
         Test if:
-            1. Returns the expected value (in this test we expect it
-            to be False because that is the default value when a Source
-            instance is created).
+            1. Returns the expected value (True when _is_connected
+            is set to True and False otherwise).
         """
-        # Assert is_connected has the expected value
+        # Assert is_connected is True
+        self.source._is_connected = True
+        self.assertTrue(expr=self.source.is_connected)
+        # Assert is_connected is False
+        self.source._is_connected = False
         self.assertFalse(expr=self.source.is_connected)
 
     @pytest.mark.unit
@@ -259,3 +262,37 @@ class TestSource(TestCase):
 
         # Assert the response returned is stil a requests.Response
         self.assertIsInstance(obj=request_result, cls=Response)
+
+    @patch(target="binance_api_fetcher.persistence.source.logger.info")
+    @pytest.mark.unit
+    def test_source_disconnect(
+        self,
+        mock_logger_info: MagicMock,
+    ) -> None:
+        """Test the Source disconnect function.
+
+        Test if:
+            1. The is_connected is set to False;
+            2. The message is logged.
+
+        Args:
+            mock_logger_info: Mock for logger.info function call.
+        """
+        # Save orignal value of is_connected
+        attr_original_value: bool = self.source._is_connected
+        # Change orignal value of is_connected
+        self.source._is_connected = True
+
+        # Call the request function
+        self.source.disconnect()
+
+        # Assert is_connected attribute is False
+        self.assertFalse(expr=self.source._is_connected)
+        # Assert logger.info is called with the correct message
+        mock_logger_info.assert_called_with(
+            msg=f"{self.source.__class__.__name__} "
+            f"disconnected from: {self.source._url}."
+        )
+
+        # Reset orignal value of is_connected
+        self.source._is_connected = attr_original_value

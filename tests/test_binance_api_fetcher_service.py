@@ -17,25 +17,23 @@ class TestService(TestCase):
     Attributes:
         service: Service class instance that will be used in every unit test.
         service_args: Args used to create the Service instance.
+        mock_service_source_component: MagicMock to configure the behaviour
+            of the Source class.
+        mock_service_target_component: MagicMock to configure the behaviour
+            of the Target class.
     """
-
-    # Attributes/Args:
-    #     mock_service_source: MagicMock to configure the behaviour of the
-    #         Source class.
-    #     mock_service_target: MagicMock to configure the behaviour of the
-    #         Target class.
 
     service: Service
     service_args: MagicMock
-    # mock_service_source: MagicMock
-    # mock_service_target: MagicMock
+    mock_service_source_component: MagicMock
+    mock_service_target_component: MagicMock
 
-    # @patch(target="veve_account_validation._service.target.Target")
-    # @patch(target="veve_account_validation._service.source.Source")
+    @patch(target="binance_api_fetcher.model.service.Target")
+    @patch(target="binance_api_fetcher.model.service.Source")
     def setUp(
         self,
-        # mock_service_source: MagicMock,
-        # mock_service_target: MagicMock,
+        mock_service_source_component: MagicMock,
+        mock_service_target_component: MagicMock,
     ) -> None:
         """Create a service instance to use in all tests.
 
@@ -43,6 +41,12 @@ class TestService(TestCase):
         to call functions, so we can use and test them, otherwise we
         have ValueErrors because of the packages that should not be
         addressed by these tests.
+
+        Args:
+            mock_service_source_component: MagicMock to configure the behaviour
+                of the Source class.
+            mock_service_target_component: MagicMock to configure the behaviour
+                of the Target class.
         """
         # Set up the service args with the needed arguments
         self.service_args = MagicMock(
@@ -66,9 +70,9 @@ class TestService(TestCase):
         )
         # Set up a Service instance for all tests (call the __init__ function)
         self.service = Service(args=self.service_args)
-        # # Save the constructor mocks
-        # self.mock_service_source = mock_service_source
-        # self.mock_service_target = mock_service_target
+        # Save the constructor mocks
+        self.mock_service_source_component = mock_service_source_component
+        self.mock_service_target_component = mock_service_target_component
 
     @pytest.mark.unit
     def test_service_init(
@@ -85,9 +89,8 @@ class TestService(TestCase):
             4. The calls to the functions are made.
         """
         self._test_init_args_assignment()
-        # self._test_init_constructor_assignment()
-        # self._test_init_constructor_calls()
-        # self._test_init_func_calls()
+        self._test_init_constructor_call_and_assignment()
+        # self._test_init_entities_happy_path()
 
     def _test_init_args_assignment(self) -> None:
         """Test if args are assigned.
@@ -147,73 +150,58 @@ class TestService(TestCase):
         self.assertEqual(first=self.service._shard, second=self.service_args.shard)
         self.assertIsInstance(obj=self.service._shard, cls=int)
 
-    # def _test_init_constructor_assignment(self) -> None:
-    #     """Test if constructors are assigned.
-    #
-    #     Test if constructors are assigned in the __init__ function,
-    #     by comparing the service source and target attributes with the
-    #     Source and Target constructors return value.
-    #     """
-    #     self.assertEqual(
-    #         first=self.service._source, second=self.mock_service_source.return_value
-    #     )
-    #     self.assertEqual(
-    #         first=self.service._target, second=self.mock_service_target.return_value
-    #     )
+    def _test_init_constructor_call_and_assignment(self) -> None:
+        """Test if constructors are called and assigned.
 
-    # def _test_init_constructor_calls(self) -> None:
-    #     """Test if constructors are called.
-    #
-    #     Test if constructors are called in the __init__ function,
-    #     with the respective arguments.
-    #     """
-    #     self.mock_service_source.assert_called_once_with(self.service_args.source)
-    #     self.mock_service_target.assert_called_once_with(self.service_args.target)
-    #     self.mock_service_nats_client.assert_called_once()
+        Test if constructors are called and assigned in the __init__ function,
+        by comparing the service source and target components with the
+        Source and Target constructors calls and return values.
+        """
+        # Assert constructor calls
+        self.mock_service_source_component.assert_called_once_with(self.service._source)
+        self.mock_service_target_component.assert_called_once_with(self.service._target)
+        # Assert constructor assignments
+        self.assertEqual(
+            first=self.service._source_component,
+            second=self.mock_service_source_component.return_value,
+        )
+        self.assertEqual(
+            first=self.service._target_component,
+            second=self.mock_service_target_component.return_value,
+        )
 
-    # def _test_init_func_calls(self) -> None:
-    #     """Test if functions are called.
+    # def _test_init_entities_happy_path(self) -> None:
+    #     """Test if all entities are added.
     #
-    #     Test if functions are called in the __init__ function,
-    #     with the respective arguments.
+    #     Test if all entities are added, i.e. that all if statements are True.
     #     """
     #     self.mock_service_declare_metrics.assert_called_once()
 
+    @patch.object(target=Service, attribute="tear_down")
+    @patch(target="binance_api_fetcher.model.service.logger.info")
+    @patch.object(target=Service, attribute="run_once")
+    @patch.object(target=Service, attribute="run_service")
     @pytest.mark.unit
-    def test_service_run(
+    def test_service_run_with_run_as_service(
         self,
+        mock_run_service: MagicMock,
+        mock_run_once: MagicMock,
+        mock_logger_info: MagicMock,
+        mock_tear_down: MagicMock,
     ) -> None:
         """Test the Service run function.
 
         Test if:
             1. Source and Target components call their connect method;
             2. The call to the run_service function is made;
-            3. The call to the run_once function is made;
+            3. The call to the run_once function is not made;
             4. The call to the tear_down function is made.
-
-        These tests are made by testing each scenario of the run function,
-        i.e. with the _run_as_service attribute set to True and False.
-        """
-        self._test_service_run_with_run_as_service()
-        self._test_service_run_without_run_as_service()
-
-    @patch(target="binance_api_fetcher.model.service.logger.info")
-    @patch.object(target=Service, attribute="run_service")
-    def _test_service_run_with_run_as_service(
-        self,
-        mock_run_service: MagicMock,
-        mock_logger_info: MagicMock,
-    ) -> None:
-        """Test the Service run function with run_as_service.
-
-        Test if:
-            1. Source and Target components call their connect method;
-            2. The call to the run_service function is made;
-            3. The call to the tear_down function is made.
 
         Args:
             mock_run_service: Mock for run_service function call.
+            mock_run_once: Mock for run_once function call.
             mock_logger_info: Mock for logger.info function call.
+            mock_tear_down: Mock for tear_down function call.
         """
         # Save orignal value of run_as_service
         attr_original_value: bool = self.service._run_as_service
@@ -223,31 +211,46 @@ class TestService(TestCase):
         # Call the run function
         self.service.run()
 
+        # Assert Source and Target connect function calls
+        self.mock_service_source_component.return_value.connect.assert_called_once()
+        self.mock_service_target_component.return_value.connect.assert_called_once()
         # Assert logger.info is called with the correct message
         mock_logger_info.assert_called_once_with(msg="Running the service continuosly.")
         # Assert run_service is called exactly once
         mock_run_service.assert_called_once()
+        # Assert run once is not called
+        mock_run_once.assert_not_called()
+        # Assert tear_down is called exactly once
+        mock_tear_down.assert_called_once()
 
         # Reset orignal value of run_as_service
         self.service._run_as_service = attr_original_value
 
+    @patch.object(target=Service, attribute="tear_down")
     @patch(target="binance_api_fetcher.model.service.logger.info")
     @patch.object(target=Service, attribute="run_once")
-    def _test_service_run_without_run_as_service(
+    @patch.object(target=Service, attribute="run_service")
+    @pytest.mark.unit
+    def test_service_run_without_run_as_service(
         self,
+        mock_run_service: MagicMock,
         mock_run_once: MagicMock,
         mock_logger_info: MagicMock,
+        mock_tear_down: MagicMock,
     ) -> None:
-        """Test the Service run function without run_as_service.
+        """Test the Service run function.
 
         Test if:
             1. Source and Target components call their connect method;
-            2. The call to the run_once function is made;
-            3. The call to the tear_down function is made.
+            2. The call to the run_service function is made;
+            3. The call to the run_once function is not made;
+            4. The call to the tear_down function is made.
 
         Args:
+            mock_run_service: Mock for run_service function call.
             mock_run_once: Mock for run_once function call.
             mock_logger_info: Mock for logger.info function call.
+            mock_tear_down: Mock for tear_down function call.
         """
         # Save orignal value of run_as_service
         attr_original_value: bool = self.service._run_as_service
@@ -257,10 +260,18 @@ class TestService(TestCase):
         # Call the run function
         self.service.run()
 
+        # Assert Source and Target connect function calls
+        self.mock_service_source_component.return_value.connect.assert_called_once()
+        self.mock_service_target_component.return_value.connect.assert_called_once()
+
         # Assert logger.info is called with the correct message
         mock_logger_info.assert_called_once_with(msg="Running the service once.")
-        # Assert run_once is called exactly once
+        # Assert run_service is not called
+        mock_run_service.assert_not_called()
+        # Assert run once is called exactly once
         mock_run_once.assert_called_once()
+        # Assert tear_down is called exactly once
+        mock_tear_down.assert_called_once()
 
         # Reset orignal value of run_as_service
         self.service._run_as_service = attr_original_value
@@ -396,8 +407,11 @@ class TestService(TestCase):
         """Test the Service tear_down function.
 
         Test if:
-            1. asdasdasd;
-            2. asdasd.
+            1. Source and Target components call their disconnect method.
         """
-        # TODO implement
-        pass
+        # Call the run function
+        self.service.tear_down()
+
+        # Assert Source and Target connect function calls
+        self.mock_service_source_component.return_value.disconnect.assert_called_once()
+        self.mock_service_target_component.return_value.disconnect.assert_called_once()

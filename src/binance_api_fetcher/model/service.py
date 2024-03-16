@@ -4,6 +4,8 @@ import argparse
 import logging
 from typing import Dict
 
+from binance_api_fetcher.persistence import Source, Target
+
 logger = logging.getLogger(__name__)
 
 # # TODO these are types
@@ -58,10 +60,10 @@ class Service:
     # Service shard
     _shard: int
 
-    # # Source class component
-    # _source_component: source.Source
-    # # Target class component
-    # _target_component: target.Target
+    # Source class component
+    _source_component: Source
+    # Target class component
+    _target_component: Target
 
     # # Entities that are going to be processed by the service
     # _entities: Set[Entity] = set()
@@ -124,10 +126,9 @@ class Service:
         self._datapoint_limit = args.datapoint_limit
         self._shard = args.shard
 
-        # # Create the Source component
-        # self._source_component = source.Source(self._source)
-        # # Create the Target component
-        # self._target_component = target.Target(self._target)
+        # Create the Source and Target components
+        self._source_component = Source(self._source)
+        self._target_component = Target(self._target)
 
         # # Add entities that are going to be processed
         # if self._symbol:
@@ -143,9 +144,9 @@ class Service:
         service can run just once or continuosly. Finally, tear down
         the service.
         """
-        # Connect to source and target components
-        # self._source.connect()
-        # self._target.connect()
+        # Connect to Source and Target components
+        self._source_component.connect()
+        self._target_component.connect()
 
         # Run service according to configurtion
         if self._run_as_service:
@@ -156,7 +157,7 @@ class Service:
             self.run_once()
 
         # Tear down
-        # self.tear_down()
+        self.tear_down()
 
     def run_service(self) -> None:
         """Run the service continuosly.
@@ -617,12 +618,11 @@ class Service:
     #         logs=[e.curr.key for e in events[EventType.REMOVE]],
     #     )
 
-    # def tear_down(self) -> None:
-    #     """Tear down service.
+    def tear_down(self) -> None:
+        """Tear down service.
 
-    #     Disconnects the Source and Target components.
-    #     """
-    #     # Disconnect the Source component
-    #     self._source_component.disconnect()
-    #     # Disconnect the Target component
-    #     self._target_component.disconnect()
+        Disconnects the Source and Target components.
+        """
+        # Disconnect the Source and Target components
+        self._source_component.disconnect()
+        self._target_component.disconnect()

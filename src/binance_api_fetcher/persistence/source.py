@@ -108,5 +108,15 @@ class Source:
                 f"{type(request_error).__name__} - {request_error}."
             )
             return requests.Response()
+        # TODO add generic Exception handle
 
         return response
+
+    def disconnect(self) -> None:
+        """Disconnect from data source.
+
+        Set the is_connected attribute to False
+        and log a message.
+        """
+        self._is_connected = False
+        logger.info(msg=f"{self.__class__.__name__} disconnected from: {self._url}.")
