@@ -2,7 +2,6 @@
 
 import argparse
 import logging
-from typing import Dict
 
 from binance_api_fetcher.persistence import Source, Target
 
@@ -87,22 +86,6 @@ class Service:
     #     Entity.KLINE_1D: model.Kline1dLog,
     #     Entity.SYMBOL: model.SymbolLog,
     # }
-    # Status Codes that can be received by requests made
-    # TODO should be an enum
-    _status_codes: Dict[int, str] = {
-        200: "OK",
-        400: "Bad Request",
-        401: "Unauthorized",
-        403: "Forbidden",
-        404: "Not Found",
-        405: "Method Not Allowed",
-        406: "Not Acceptable",
-        429: "Too Many Requests",
-        500: "Internal Server Error",
-        502: "Bad Gateway",
-        503: "Service Unavailable",
-        504: "Gateway Timeout",
-    }
 
     def __init__(self, args: argparse.Namespace) -> None:
         """Intialize service components.

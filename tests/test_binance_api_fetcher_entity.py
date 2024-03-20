@@ -21,7 +21,9 @@ class TestEntity(TestCase):
         Test if all members of the Entity class exist and have the
         expected values.
         """
+        # Assert members
         self.assertTrue(Entity.KLINE_1D in Entity)
+        # Assert values
         self.assertEqual(Entity.KLINE_1D.value, "kline_1d")
 
     @pytest.mark.unit
