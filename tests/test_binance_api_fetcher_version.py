@@ -16,5 +16,9 @@ class TestVersion(TestCase):
 
     @pytest.mark.unit
     def test_version(self) -> None:
-        """Test binance_api_fetcher package version."""
+        """Test binance_api_fetcher package version.
+
+        Test if the binance_api_fetcher __version__ is the same
+        as the one presented in the pyproject.toml file
+        """
         self.assertEqual(first=__version__, second="0.1.0")
