@@ -46,6 +46,8 @@ class Service:
     _source: str
     # String to create the Target component
     _target: str
+    # String to know the Source Ping information
+    _source_ping: str
     # Service minimum time to sleep between iterations
     _min_sleep: int
     # Service maximum time to sleep between iterations
@@ -102,6 +104,7 @@ class Service:
         self._dry_run = args.dry_run
         self._source = args.source
         self._target = args.target
+        self._source_ping = args.source_ping
         self._min_sleep = args.min_sleep
         self._max_sleep = args.max_sleep
         self._symbol = args.symbol
@@ -110,7 +113,10 @@ class Service:
         self._shard = args.shard
 
         # Create the Source and Target components
-        self._source_component = Source(self._source)
+        self._source_component = Source(
+            connection_string=self._source,
+            ping_string=self._source_ping,
+        )
         self._target_component = Target(self._target)
 
         # # Add entities that are going to be processed

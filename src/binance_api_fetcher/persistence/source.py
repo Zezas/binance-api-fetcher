@@ -3,6 +3,7 @@
 import logging
 from typing import Dict, Optional, Union
 
+from binance_api_fetcher.model import StatusCode
 import requests
 from requests import Response
 
@@ -26,10 +27,12 @@ class Source:
 
     # String with the url used to fetch data
     _url: str
+    # String with the ping information
+    _ping: str
     # Bool to know if connection to source is exists
     _is_connected: bool
 
-    def __init__(self, connection_string: str) -> None:
+    def __init__(self, connection_string: str, ping_string: str) -> None:
         """Initialize source components.
 
         Create a class instance with the connection string received
@@ -37,8 +40,10 @@ class Source:
 
         Args:
             connection_string: Definitions to connect to the data source.
+            ping_string: Definitions to ping the data source.
         """
         self._url = connection_string
+        self._ping = ping_string
         self._is_connected = False
 
     @property
@@ -57,8 +62,7 @@ class Source:
         Returns:
             str: Ping endpoint url.
         """
-        # TODO this should be configured
-        return "ping"
+        return self._ping
 
     def connect(self) -> None:
         """Connect to data source.
@@ -73,8 +77,7 @@ class Source:
         # Make the ping request
         ping_response: Response = self.request(url=self.ping_url)
         # Check the status code
-        # TODO put status codes in a constants file
-        if ping_response.status_code == 200:
+        if ping_response.status_code == StatusCode.OK.value:
             self._is_connected = True
             logger.info(msg=f"{self.__class__.__name__} connected to: {self._url}.")
         else:

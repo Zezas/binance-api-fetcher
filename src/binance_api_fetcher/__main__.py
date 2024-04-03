@@ -8,7 +8,7 @@ import os
 from sys import stdout
 
 from binance_api_fetcher import __version__
-from binance_api_fetcher.model import Service
+from binance_api_fetcher.model.service import Service
 
 logger: Logger = logging.getLogger(__name__)
 
@@ -87,6 +87,15 @@ def parse_args() -> argparse.Namespace:
         default=os.environ.get("TARGET", default=""),
         help="Postgres connection URL. e.g.: "
         "user=username password=password host=localhost port=5432 dbname=binance",
+    )
+
+    parser.add_argument(
+        "--source_ping",
+        dest="source_ping",
+        type=str,
+        required=False,
+        default=os.environ.get("SOURCE_PING", default=""),
+        help="Binance API ping url. e.g.: ping",
     )
 
     parser.add_argument(

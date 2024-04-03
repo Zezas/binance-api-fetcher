@@ -50,6 +50,9 @@ class TestMain(TestCase):
         # target
         self.assertEqual(first=args.target, second="")
         self.assertIsInstance(obj=args.target, cls=str)
+        # source_ping
+        self.assertEqual(first=args.source_ping, second="")
+        self.assertIsInstance(obj=args.source_ping, cls=str)
         # min_sleep
         self.assertEqual(first=args.min_sleep, second=15)
         self.assertIsInstance(obj=args.min_sleep, cls=int)
@@ -86,6 +89,7 @@ class TestMain(TestCase):
         monkeypatch.setenv(name="DRY_RUN", value="True")
         monkeypatch.setenv(name="SOURCE", value="source")
         monkeypatch.setenv(name="TARGET", value="target")
+        monkeypatch.setenv(name="SOURCE_PING", value="source_ping")
         monkeypatch.setenv(name="MIN_SLEEP", value="0")
         monkeypatch.setenv(name="MAX_SLEEP", value="1")
         monkeypatch.setenv(name="SYMBOL", value="ethbtc")
@@ -113,6 +117,9 @@ class TestMain(TestCase):
         # target
         self.assertEqual(first=args.target, second="target")
         self.assertIsInstance(obj=args.target, cls=str)
+        # source_ping
+        self.assertEqual(first=args.source_ping, second="source_ping")
+        self.assertIsInstance(obj=args.source_ping, cls=str)
         # min_sleep
         self.assertEqual(first=args.min_sleep, second=0)
         self.assertIsInstance(obj=args.min_sleep, cls=int)

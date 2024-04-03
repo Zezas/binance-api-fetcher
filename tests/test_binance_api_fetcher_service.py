@@ -3,7 +3,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from binance_api_fetcher.model import Service  # type: ignore
+from binance_api_fetcher.model.service import Service  # type: ignore
 import pytest
 
 
@@ -61,6 +61,7 @@ class TestService(TestCase):
                 "user=username password=password "
                 "host=localhost port=5432 dbname=binance"
             ),
+            source_ping="ping",
             min_sleep=0,
             max_sleep=1,
             symbol="ethbtc",
@@ -122,6 +123,12 @@ class TestService(TestCase):
             second=self.service_args.target,
         )
         self.assertIsInstance(obj=self.service._target, cls=str)
+        # source_ping
+        self.assertEqual(
+            first=self.service._source_ping,
+            second=self.service_args.source_ping,
+        )
+        self.assertIsInstance(obj=self.service._source_ping, cls=str)
         # min_sleep
         self.assertEqual(
             first=self.service._min_sleep, second=self.service_args.min_sleep
@@ -158,7 +165,10 @@ class TestService(TestCase):
         Source and Target constructors calls and return values.
         """
         # Assert constructor calls
-        self.mock_service_source_component.assert_called_once_with(self.service._source)
+        self.mock_service_source_component.assert_called_once_with(
+            connection_string=self.service._source,
+            ping_string=self.service._source_ping,
+        )
         self.mock_service_target_component.assert_called_once_with(self.service._target)
         # Assert constructor assignments
         self.assertEqual(

@@ -3,6 +3,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+from binance_api_fetcher.model import StatusCode  # type: ignore
 from binance_api_fetcher.persistence import Source, SourceError  # type: ignore
 import pytest
 import requests
@@ -32,10 +33,15 @@ class TestSource(TestCase):
         have ValueErrors because of the packages that should not be
         addressed by these tests.
         """
-        # Create a connection string used by the target
+        # Create a connection string used by the source
         self.test_connection_string: str = "https://api.binance.com/api/v3/"
+        # Create a ping string used by the source
+        self.test_ping_string: str = "ping"
         # Set up a Source instance for all tests (call the __init__ function)
-        self.source = Source(connection_string=self.test_connection_string)
+        self.source = Source(
+            connection_string=self.test_connection_string,
+            ping_string=self.test_ping_string,
+        )
 
     @pytest.mark.unit
     def test_source_init(
@@ -53,6 +59,12 @@ class TestSource(TestCase):
             second=self.test_connection_string,
         )
         self.assertIsInstance(obj=self.source._url, cls=str)
+        # ping
+        self.assertEqual(
+            first=self.source._ping,
+            second=self.test_ping_string,
+        )
+        self.assertIsInstance(obj=self.source._ping, cls=str)
         # is_connected
         self.assertFalse(expr=self.source._is_connected)
         self.assertIsInstance(obj=self.source._is_connected, cls=bool)
@@ -83,13 +95,10 @@ class TestSource(TestCase):
         Test if:
             1. Returns the expected value.
         """
-        # Create the expected ping url
-        expected_ping_url: str = "ping"
-
         # Assert ping_url has the expected value
         self.assertEqual(
             first=self.source.ping_url,
-            second=expected_ping_url,
+            second=self.test_ping_string,
         )
 
     @patch(target="binance_api_fetcher.persistence.source.logger.info")
@@ -113,7 +122,7 @@ class TestSource(TestCase):
         """
         # Mock the request function to return a successful response
         mock_response: MagicMock = MagicMock(spec=Response)
-        mock_response.status_code = 200
+        mock_response.status_code = StatusCode.OK.value
         mock_request.return_value = mock_response
 
         # Call the connect function
@@ -153,8 +162,8 @@ class TestSource(TestCase):
         """
         # Mock the request function to return a unsuccessful response
         mock_response: MagicMock = MagicMock(spec=Response)
-        mock_response.status_code = 404
-        mock_response.text = "Not Found"
+        mock_response.status_code = StatusCode.NOT_FOUND.value
+        mock_response.text = StatusCode.NOT_FOUND.name
         mock_request.return_value = mock_response
 
         # Call the connect function, expecting a SourceError
@@ -203,7 +212,7 @@ class TestSource(TestCase):
         test_url: str = "test_url"
         # Mock the requests.get function to return a successful response
         mock_response: MagicMock = MagicMock(spec=Response)
-        mock_response.status_code = 200
+        mock_response.status_code = StatusCode.OK.value
         mock_requests_get.get.return_value = mock_response
 
         # Call the request function

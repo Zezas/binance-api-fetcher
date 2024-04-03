@@ -1,4 +1,4 @@
-"""Entity data model."""
+"""Status code data model."""
 
 from enum import Enum
 
