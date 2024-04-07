@@ -37,10 +37,13 @@ class TestSource(TestCase):
         self.test_connection_string: str = "https://api.binance.com/api/v3/"
         # Create a ping string used by the source
         self.test_ping_string: str = "ping"
+        # Create a request timeout used by the source
+        self.test_request_timeout: int = 120
         # Set up a Source instance for all tests (call the __init__ function)
         self.source = Source(
             connection_string=self.test_connection_string,
             ping_string=self.test_ping_string,
+            request_timeout=self.test_request_timeout,
         )
 
     @pytest.mark.unit
@@ -65,6 +68,12 @@ class TestSource(TestCase):
             second=self.test_ping_string,
         )
         self.assertIsInstance(obj=self.source._ping, cls=str)
+        # request_timeout
+        self.assertEqual(
+            first=self.source._request_timeout,
+            second=self.test_request_timeout,
+        )
+        self.assertIsInstance(obj=self.source._request_timeout, cls=int)
         # is_connected
         self.assertFalse(expr=self.source._is_connected)
         self.assertIsInstance(obj=self.source._is_connected, cls=bool)
@@ -220,7 +229,9 @@ class TestSource(TestCase):
 
         # Assert request is called with the correct arguments
         mock_requests_get.get.assert_called_once_with(
-            url=self.source._url + test_url, params=None, timeout=120
+            url=self.source._url + test_url,
+            params=None,
+            timeout=self.source._request_timeout,
         )
 
         # Assert the response is returned with the expected result
@@ -232,18 +243,19 @@ class TestSource(TestCase):
     @patch(target="binance_api_fetcher.persistence.source.logger.warning")
     @patch(target="binance_api_fetcher.persistence.source.requests.get")
     @pytest.mark.unit
-    def test_source_request_with_error(
+    def test_source_request_request_error_handling(
         self,
         mock_requests_get: MagicMock,
         mock_logger_warning: MagicMock,
     ) -> None:
-        """Test the Source request function with error.
+        """Test the Source request function.
 
         Test if:
             1. The call to the requests.get function is made with the
             correct arguments;
-            2. The warning message is correct;
-            3. A default response is returned.
+            2. The RequestException is caught;
+            3. The warning message is correct;
+            4. A default response is returned.
 
         Args:
             mock_requests_get: Mock for requests.get function call.
@@ -261,16 +273,66 @@ class TestSource(TestCase):
 
         # Assert request is called with the correct arguments
         mock_requests_get.assert_called_once_with(
-            url=self.source._url + test_url, params=None, timeout=120
+            url=self.source._url + test_url,
+            params=None,
+            timeout=self.source._request_timeout,
         )
 
         # Assert logger.warning is called with the correct message
         mock_logger_warning.assert_called_with(
-            msg="Error making request: " "RequestException - Testing error."
+            msg="Error making request: RequestException - Testing error."
         )
 
         # Assert the response returned is stil a requests.Response
         self.assertIsInstance(obj=request_result, cls=Response)
+
+    @patch(target="binance_api_fetcher.persistence.source.logger.error")
+    @patch(target="binance_api_fetcher.persistence.source.requests.get")
+    @pytest.mark.unit
+    def test_source_request_exception_error_handling(
+        self,
+        mock_requests_get: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Source request function.
+
+        Test if:
+            1. The call to the requests.get function is made with the
+            correct arguments;
+            2. The Exception is caught and handled.
+
+        Args:
+            mock_requests_get: Mock for requests.get function call.
+            mock_logger_error: Mock for logger.error function call.
+        """
+        # Create a test url to use as argument for the request function
+        test_url: str = "test_url"
+        # Create a side effect for the requests.get to get an Exception
+        mock_requests_get.side_effect = Exception("Testing error")
+
+        # Call the request function
+        with self.assertRaises(SourceError) as context:
+            self.source.request(url=test_url)
+
+        # Assert request is called with the correct arguments
+        mock_requests_get.assert_called_once_with(
+            url=self.source._url + test_url,
+            params=None,
+            timeout=self.source._request_timeout,
+        )
+
+        # Assert logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got an unexpected error while interacting with source datasource: "
+            "Exception - Testing error."
+        )
+        # Assert that the SourceError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error requesting the source datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=Exception)
 
     @patch(target="binance_api_fetcher.persistence.source.logger.info")
     @pytest.mark.unit

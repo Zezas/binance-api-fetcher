@@ -3,7 +3,11 @@
 from binance_api_fetcher.persistence import Source  # type: ignore
 
 
-def create_source_instance(connection_string: str, ping_string: str) -> Source:
+def create_source_instance(
+    connection_string: str,
+    ping_string: str,
+    request_timeout: int,
+) -> Source:
     """Create Source class instance.
 
     Create a Source class instance with the connection string received.
@@ -11,11 +15,16 @@ def create_source_instance(connection_string: str, ping_string: str) -> Source:
     Args:
         connection_string: Definitions to connect to the data source.
         ping_string: Definitions to ping the data source.
+        request_timeout: Request timeout to fetch data from the data source.
 
     Returns:
         Source: Source class instance.
     """
-    return Source(connection_string=connection_string, ping_string=ping_string)
+    return Source(
+        connection_string=connection_string,
+        ping_string=ping_string,
+        request_timeout=request_timeout,
+    )
 
 
 def connect_to_source(source: Source) -> None:

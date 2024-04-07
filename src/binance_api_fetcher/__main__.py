@@ -90,15 +90,6 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--source_ping",
-        dest="source_ping",
-        type=str,
-        required=False,
-        default=os.environ.get("SOURCE_PING", default=""),
-        help="Binance API ping url. e.g.: ping",
-    )
-
-    parser.add_argument(
         "--min_sleep",
         dest="min_sleep",
         type=int,
@@ -114,6 +105,24 @@ def parse_args() -> argparse.Namespace:
         required=False,
         default=int(os.getenv("MAX_SLEEP", default=30)),
         help="Service maximum time to sleep between iterations (default: 30).",
+    )
+
+    parser.add_argument(
+        "--source_ping",
+        dest="source_ping",
+        type=str,
+        required=False,
+        default=os.environ.get("SOURCE_PING", default=""),
+        help="Binance API ping url. e.g.: ping",
+    )
+
+    parser.add_argument(
+        "--source_request_timeout",
+        dest="source_request_timeout",
+        type=int,
+        required=False,
+        default=int(os.getenv("SOURCE_REQUEST_TIMEOUT", default=300)),
+        help="Resquest timeout (seconds) for source datasource.",
     )
 
     parser.add_argument(
@@ -150,15 +159,6 @@ def parse_args() -> argparse.Namespace:
         required=False,
         default=int(os.getenv("DATAPOINT_LIMIT", default=500)),
         help="Service datapoint limit (default: 500).",
-    )
-
-    parser.add_argument(
-        "--shard",
-        dest="shard",
-        type=int,
-        required=False,
-        default=int(os.getenv("SHARD", default=0)),
-        help="Service shard (default: 0).",
     )
 
     args_parsed: argparse.Namespace = parser.parse_args()

@@ -61,13 +61,13 @@ class TestService(TestCase):
                 "user=username password=password "
                 "host=localhost port=5432 dbname=binance"
             ),
-            source_ping="ping",
             min_sleep=0,
             max_sleep=1,
+            source_ping="ping",
+            source_request_timeout=120,
             symbol="ethbtc",
             kline_1d=True,
             datapoint_limit=1000,
-            shard=1,
         )
         # Set up a Service instance for all tests (call the __init__ function)
         self.service = Service(args=self.service_args)
@@ -75,25 +75,7 @@ class TestService(TestCase):
         self.mock_service_source_component = mock_service_source_component
         self.mock_service_target_component = mock_service_target_component
 
-    @pytest.mark.unit
-    def test_service_init(
-        self,
-    ) -> None:
-        """Test the Service __init__ function.
-
-        Test if:
-            1. Attributes of the Service instance have the args
-            received assigned;
-            2. Attributes of the Service instance have the mocks
-            assigned, i.e. the Source and Target mocks;
-            3. The calls to the Source and Target constructors are made;
-            4. The calls to the functions are made.
-        """
-        self._test_init_args_assignment()
-        self._test_init_constructor_call_and_assignment()
-        # self._test_init_entities_happy_path()
-
-    def _test_init_args_assignment(self) -> None:
+    def test_init_args_assignment(self) -> None:
         """Test if args are assigned.
 
         Test if args are assigned in the __init__ function,
@@ -123,12 +105,6 @@ class TestService(TestCase):
             second=self.service_args.target,
         )
         self.assertIsInstance(obj=self.service._target, cls=str)
-        # source_ping
-        self.assertEqual(
-            first=self.service._source_ping,
-            second=self.service_args.source_ping,
-        )
-        self.assertIsInstance(obj=self.service._source_ping, cls=str)
         # min_sleep
         self.assertEqual(
             first=self.service._min_sleep, second=self.service_args.min_sleep
@@ -139,6 +115,18 @@ class TestService(TestCase):
             first=self.service._max_sleep, second=self.service_args.max_sleep
         )
         self.assertIsInstance(obj=self.service._max_sleep, cls=int)
+        # source_ping
+        self.assertEqual(
+            first=self.service._source_ping,
+            second=self.service_args.source_ping,
+        )
+        self.assertIsInstance(obj=self.service._source_ping, cls=str)
+        # source_request_timeout
+        self.assertEqual(
+            first=self.service._source_request_timeout,
+            second=self.service_args.source_request_timeout,
+        )
+        self.assertIsInstance(obj=self.service._source_request_timeout, cls=int)
         # symbol
         self.assertEqual(first=self.service._symbol, second=self.service_args.symbol)
         self.assertIsInstance(obj=self.service._symbol, cls=str)
@@ -153,11 +141,8 @@ class TestService(TestCase):
             second=self.service_args.datapoint_limit,
         )
         self.assertIsInstance(obj=self.service._datapoint_limit, cls=int)
-        # shard
-        self.assertEqual(first=self.service._shard, second=self.service_args.shard)
-        self.assertIsInstance(obj=self.service._shard, cls=int)
 
-    def _test_init_constructor_call_and_assignment(self) -> None:
+    def test_init_constructor_call_and_assignment(self) -> None:
         """Test if constructors are called and assigned.
 
         Test if constructors are called and assigned in the __init__ function,
@@ -168,6 +153,7 @@ class TestService(TestCase):
         self.mock_service_source_component.assert_called_once_with(
             connection_string=self.service._source,
             ping_string=self.service._source_ping,
+            request_timeout=self.service._source_request_timeout,
         )
         self.mock_service_target_component.assert_called_once_with(self.service._target)
         # Assert constructor assignments

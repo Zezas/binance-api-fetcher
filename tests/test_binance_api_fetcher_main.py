@@ -50,15 +50,18 @@ class TestMain(TestCase):
         # target
         self.assertEqual(first=args.target, second="")
         self.assertIsInstance(obj=args.target, cls=str)
-        # source_ping
-        self.assertEqual(first=args.source_ping, second="")
-        self.assertIsInstance(obj=args.source_ping, cls=str)
         # min_sleep
         self.assertEqual(first=args.min_sleep, second=15)
         self.assertIsInstance(obj=args.min_sleep, cls=int)
         # max_sleep
         self.assertEqual(first=args.max_sleep, second=30)
         self.assertIsInstance(obj=args.max_sleep, cls=int)
+        # source_ping
+        self.assertEqual(first=args.source_ping, second="")
+        self.assertIsInstance(obj=args.source_ping, cls=str)
+        # source_request_timeout
+        self.assertEqual(first=args.source_request_timeout, second=300)
+        self.assertIsInstance(obj=args.source_request_timeout, cls=int)
         # symbol
         self.assertEqual(first=args.symbol, second="")
         self.assertIsInstance(obj=args.symbol, cls=str)
@@ -68,9 +71,6 @@ class TestMain(TestCase):
         # datapoint_limit
         self.assertEqual(first=args.datapoint_limit, second=500)
         self.assertIsInstance(obj=args.datapoint_limit, cls=int)
-        # shard
-        self.assertEqual(first=args.shard, second=0)
-        self.assertIsInstance(obj=args.shard, cls=int)
 
     @patch.object(target=sys, attribute="argv", new=[])
     @pytest.mark.unit
@@ -89,13 +89,13 @@ class TestMain(TestCase):
         monkeypatch.setenv(name="DRY_RUN", value="True")
         monkeypatch.setenv(name="SOURCE", value="source")
         monkeypatch.setenv(name="TARGET", value="target")
-        monkeypatch.setenv(name="SOURCE_PING", value="source_ping")
         monkeypatch.setenv(name="MIN_SLEEP", value="0")
         monkeypatch.setenv(name="MAX_SLEEP", value="1")
+        monkeypatch.setenv(name="SOURCE_PING", value="source_ping")
+        monkeypatch.setenv(name="SOURCE_REQUEST_TIMEOUT", value="120")
         monkeypatch.setenv(name="SYMBOL", value="ethbtc")
         monkeypatch.setenv(name="KLINE_1D", value="True")
         monkeypatch.setenv(name="DATAPOINT_LIMIT", value="1000")
-        monkeypatch.setenv(name="SHARD", value="1")
 
         # Call the parse_args function
         args = parse_args()
@@ -117,15 +117,18 @@ class TestMain(TestCase):
         # target
         self.assertEqual(first=args.target, second="target")
         self.assertIsInstance(obj=args.target, cls=str)
-        # source_ping
-        self.assertEqual(first=args.source_ping, second="source_ping")
-        self.assertIsInstance(obj=args.source_ping, cls=str)
         # min_sleep
         self.assertEqual(first=args.min_sleep, second=0)
         self.assertIsInstance(obj=args.min_sleep, cls=int)
         # max_sleep
         self.assertEqual(first=args.max_sleep, second=1)
         self.assertIsInstance(obj=args.max_sleep, cls=int)
+        # source_ping
+        self.assertEqual(first=args.source_ping, second="source_ping")
+        self.assertIsInstance(obj=args.source_ping, cls=str)
+        # source_request_timeout
+        self.assertEqual(first=args.source_request_timeout, second=120)
+        self.assertIsInstance(obj=args.source_request_timeout, cls=int)
         # symbol
         self.assertEqual(first=args.symbol, second="ethbtc")
         self.assertIsInstance(obj=args.symbol, cls=str)
@@ -135,9 +138,6 @@ class TestMain(TestCase):
         # datapoint_limit
         self.assertEqual(first=args.datapoint_limit, second=1000)
         self.assertIsInstance(obj=args.datapoint_limit, cls=int)
-        # shard
-        self.assertEqual(first=args.shard, second=1)
-        self.assertIsInstance(obj=args.shard, cls=int)
 
     @patch(target="binance_api_fetcher.__main__.logging")
     @pytest.mark.unit

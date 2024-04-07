@@ -104,18 +104,19 @@ class Service:
         self._dry_run = args.dry_run
         self._source = args.source
         self._target = args.target
-        self._source_ping = args.source_ping
         self._min_sleep = args.min_sleep
         self._max_sleep = args.max_sleep
+        self._source_ping = args.source_ping
+        self._source_request_timeout = args.source_request_timeout
         self._symbol = args.symbol
         self._kline_1d = args.kline_1d
         self._datapoint_limit = args.datapoint_limit
-        self._shard = args.shard
 
         # Create the Source and Target components
         self._source_component = Source(
             connection_string=self._source,
             ping_string=self._source_ping,
+            request_timeout=self._source_request_timeout,
         )
         self._target_component = Target(self._target)
 

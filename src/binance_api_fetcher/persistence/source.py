@@ -29,10 +29,17 @@ class Source:
     _url: str
     # String with the ping information
     _ping: str
+    # Int with the request timeout (seconds)
+    _request_timeout: int
     # Bool to know if connection to source is exists
     _is_connected: bool
 
-    def __init__(self, connection_string: str, ping_string: str) -> None:
+    def __init__(
+        self,
+        connection_string: str,
+        ping_string: str,
+        request_timeout: int,
+    ) -> None:
         """Initialize source components.
 
         Create a class instance with the connection string received
@@ -41,9 +48,11 @@ class Source:
         Args:
             connection_string: Definitions to connect to the data source.
             ping_string: Definitions to ping the data source.
+            request_timeout: Request timeout to fetch data from the data source.
         """
         self._url = connection_string
         self._ping = ping_string
+        self._request_timeout = request_timeout
         self._is_connected = False
 
     @property
@@ -98,22 +107,30 @@ class Source:
 
         Returns:
             Response: API response.
+
+        Raises:
+            SourceError: Raised when an error occurs while
+                interacting with source.
         """
         try:
-            # TODO put request timeout as env variable
             response: Response = requests.get(
-                url=self._url + url, params=params, timeout=120
+                url=self._url + url, params=params, timeout=self._request_timeout
             )
-
-        except requests.exceptions.RequestException as request_error:
+            return response
+        except requests.exceptions.RequestException as error:
             logger.warning(
-                msg="Error making request: "
-                f"{type(request_error).__name__} - {request_error}."
+                msg=f"Error making request: {type(error).__name__} - {error}."
             )
             return requests.Response()
-        # TODO add generic Exception handle
-
-        return response
+        except Exception as error:
+            logger.error(
+                msg=f"Got an unexpected error while "
+                "interacting with source datasource: "
+                f"{type(error).__name__} - {error}."
+            )
+            raise SourceError(
+                "Got an error requesting the source datasource."
+            ) from error
 
     def disconnect(self) -> None:
         """Disconnect from data source.

@@ -10,20 +10,20 @@ ${source}
 *** Test Cases ***
 Test Source Connection - No Error
     [Documentation]    Test that a Source instance can connect without errors.
-    Given Source Instance Is Created    https://api.binance.com/api/v3/    ping
+    Given Source Instance Is Created    https://api.binance.com/api/v3/    ping    120
     When Source Instance Connects Successfully
     Then Source Connection Is Successful
 
 Test Source Connection - Error
     [Documentation]    Test that a Source instance throws an error with a bad connection string.
-    Given Source Instance Is Created    bad_connection_string    ping
+    Given Source Instance Is Created    bad_connection_string    ping    120
     When Source Instance Connects Unsuccessfully
     Then Source Connection Is Unsuccessful
 
 *** Keywords ***
 Source Instance Is Created
-    [Arguments]          ${connection_string}    ${ping_string}
-    ${source}            Create Source Instance    ${connection_string}    ${ping_string}
+    [Arguments]          ${connection_string}    ${ping_string}    ${request_timeout}
+    ${source}            Create Source Instance    ${connection_string}    ${ping_string}    ${request_timeout}
     Set Test Variable    ${source}
 
 Source Instance Connects Successfully
