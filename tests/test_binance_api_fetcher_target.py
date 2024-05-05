@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 from binance_api_fetcher.persistence import Target, TargetError  # type: ignore
 import psycopg2
+from psycopg2.extensions import cursor as Cursor
 import pytest
 
 
@@ -32,7 +33,7 @@ class TestTarget(TestCase):
         addressed by these tests.
         """
         # Create a connection string used by the target
-        self.test_connection_string: str = (
+        self.test_connection_string = (
             "user=username password=password host=localhost port=5432 dbname=binance"
         )
         # Set up a Target instance for all tests (call the __init__ function)
@@ -110,7 +111,7 @@ class TestTarget(TestCase):
         self.target._target_cursor = mock_psycopg2_connect.return_value.cursor
 
         # Call the function
-        test_cursor = self.target.cursor
+        test_cursor: Cursor = self.target.cursor
 
         # Assert that the logger.debug is called with the correct message
         mock_logger_debug.assert_called_with(msg="Using existing cursor.")
@@ -146,7 +147,7 @@ class TestTarget(TestCase):
         self.target._target_connection = mock_psycopg2_connect.return_value
 
         # Call the function
-        test_cursor = self.target.cursor
+        test_cursor: Cursor = self.target.cursor
 
         # Assert that the logger.debug is called with the correct message
         mock_logger_debug.assert_called_with(msg="Creating new cursor.")
@@ -420,7 +421,7 @@ class TestTarget(TestCase):
         mock_cursor.return_value.fetchone.return_value = ("Test success.",)
 
         # Call the ping_datasource function
-        test_ping_datasource = self.target.ping_datasource()
+        test_ping_datasource: str = self.target.ping_datasource()
 
         # Assert that mock_cursor is called once
         mock_cursor.assert_called_once()
@@ -459,7 +460,7 @@ class TestTarget(TestCase):
         mock_cursor.return_value.fetchone.return_value = None
 
         # Call the ping_datasource function
-        test_ping_datasource = self.target.ping_datasource()
+        test_ping_datasource: str = self.target.ping_datasource()
 
         # Assert that mock_cursor is called once
         mock_cursor.assert_called_once()
@@ -873,8 +874,8 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close = self.target._target_cursor.close
-        mock_connection_close = self.target._target_connection.close
+        mock_cursor_close: MagicMock = self.target._target_cursor.close
+        mock_connection_close: MagicMock = self.target._target_connection.close
         self.target._transaction_in_progress = True
         self.target._is_connected = True
 
@@ -930,7 +931,7 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close = self.target._target_cursor.close
+        mock_cursor_close: MagicMock = self.target._target_cursor.close
         mock_cursor_close.side_effect = psycopg2.Error("Testing error")
 
         # Call the disconnect function
@@ -985,7 +986,7 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close = self.target._target_cursor.close
+        mock_cursor_close: MagicMock = self.target._target_cursor.close
         mock_cursor_close.side_effect = Exception("Testing error")
 
         # Call the disconnect function
@@ -1040,8 +1041,8 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close = self.target._target_cursor.close
-        mock_connection_close = self.target._target_connection.close
+        mock_cursor_close: MagicMock = self.target._target_cursor.close
+        mock_connection_close: MagicMock = self.target._target_connection.close
         mock_connection_close.side_effect = psycopg2.Error("Testing error")
 
         # Call the disconnect function
@@ -1098,8 +1099,8 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close = self.target._target_cursor.close
-        mock_connection_close = self.target._target_connection.close
+        mock_cursor_close: MagicMock = self.target._target_cursor.close
+        mock_connection_close: MagicMock = self.target._target_connection.close
         mock_connection_close.side_effect = Exception("Testing error")
 
         # Call the disconnect function
@@ -1149,8 +1150,8 @@ class TestTarget(TestCase):
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_cursor_execute = mock_cursor.return_value.execute
-        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_execute: MagicMock = mock_cursor.return_value.execute
+        mock_cursor_fetchone: MagicMock = mock_cursor.return_value.fetchone
         mock_cursor_fetchone.return_value = (1,)
 
         # Call the get next delivery id function
@@ -1198,8 +1199,8 @@ class TestTarget(TestCase):
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_cursor_execute = mock_cursor.return_value.execute
-        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_execute: MagicMock = mock_cursor.return_value.execute
+        mock_cursor_fetchone: MagicMock = mock_cursor.return_value.fetchone
         mock_cursor_fetchone.return_value = None
 
         # Call the get next delivery id function
@@ -1258,8 +1259,8 @@ class TestTarget(TestCase):
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_cursor_execute = mock_cursor.return_value.execute
-        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_execute: MagicMock = mock_cursor.return_value.execute
+        mock_cursor_fetchone: MagicMock = mock_cursor.return_value.fetchone
         mock_cursor_fetchone.return_value = ()
 
         # Call the get next delivery id function
@@ -1318,8 +1319,8 @@ class TestTarget(TestCase):
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_cursor_execute = mock_cursor.return_value.execute
-        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_execute: MagicMock = mock_cursor.return_value.execute
+        mock_cursor_fetchone: MagicMock = mock_cursor.return_value.fetchone
         mock_cursor_fetchone.return_value = ("asd",)
 
         # Call the get next delivery id function
@@ -1374,7 +1375,7 @@ class TestTarget(TestCase):
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_execute: MagicMock = mock_cursor.return_value.execute
         mock_cursor_execute.side_effect = psycopg2.Error("Testing error")
 
         # Call the get next delivery id function
@@ -1422,7 +1423,7 @@ class TestTarget(TestCase):
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_execute: MagicMock = mock_cursor.return_value.execute
         mock_cursor_execute.side_effect = Exception("Testing error")
 
         # Call the get next delivery id function
@@ -1470,8 +1471,8 @@ class TestTarget(TestCase):
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_cursor_execute = mock_cursor.return_value.execute
-        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_execute: MagicMock = mock_cursor.return_value.execute
+        mock_cursor_fetchone: MagicMock = mock_cursor.return_value.fetchone
         mock_cursor_fetchone.side_effect = psycopg2.Error("Testing error")
 
         # Call the get next delivery id function
@@ -1521,8 +1522,8 @@ class TestTarget(TestCase):
                 function call.
         """
         # Set up attributes to meet conditions
-        mock_cursor_execute = mock_cursor.return_value.execute
-        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_execute: MagicMock = mock_cursor.return_value.execute
+        mock_cursor_fetchone: MagicMock = mock_cursor.return_value.fetchone
         mock_cursor_fetchone.side_effect = Exception("Testing error")
 
         # Call the get next delivery id function

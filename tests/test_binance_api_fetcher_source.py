@@ -225,7 +225,7 @@ class TestSource(TestCase):
         mock_requests_get.get.return_value = mock_response
 
         # Call the request function
-        request_result = self.source.request(url=test_url)
+        request_result: Response = self.source.request(url=test_url)
 
         # Assert request is called with the correct arguments
         mock_requests_get.get.assert_called_once_with(
@@ -269,7 +269,7 @@ class TestSource(TestCase):
         )
 
         # Call the request function
-        request_result = self.source.request(url=test_url)
+        request_result: Response = self.source.request(url=test_url)
 
         # Assert request is called with the correct arguments
         mock_requests_get.assert_called_once_with(

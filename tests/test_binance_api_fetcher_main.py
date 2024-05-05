@@ -31,7 +31,7 @@ class TestMain(TestCase):
         values and types returned by the parse_args_functions.
         """
         # Call the parse_args function
-        args = parse_args()
+        args: Namespace = parse_args()
 
         # Test args for default values
         self.assertIsInstance(obj=args, cls=Namespace)
@@ -98,7 +98,7 @@ class TestMain(TestCase):
         monkeypatch.setenv(name="DATAPOINT_LIMIT", value="1000")
 
         # Call the parse_args function
-        args = parse_args()
+        args: Namespace = parse_args()
 
         # Assert args for non default values
         self.assertIsInstance(obj=args, cls=Namespace)
