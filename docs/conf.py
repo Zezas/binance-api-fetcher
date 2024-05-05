@@ -1,4 +1,5 @@
 """Sphinx configuration."""
+
 project = "binance-api-fetcher"
 author = "José Menezes"
 copyright = f"2023, {author}"

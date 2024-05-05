@@ -9,7 +9,7 @@
 # binance-api-fetcher
 Fetch data from Binance using its API.
 
-<!-- 
+<!--
 Next Steps:
 0. Try to add type hints to tests
 1. Test run once
