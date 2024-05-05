@@ -1,8 +1,12 @@
 """Service class."""
 
 import argparse
+from datetime import datetime, UTC
 import logging
+import secrets
+from typing import Set
 
+from binance_api_fetcher.model import Entity
 from binance_api_fetcher.persistence import Source, Target
 
 logger = logging.getLogger(__name__)
@@ -43,9 +47,9 @@ class Service:
     # Bool to know if service will persist in the database
     _dry_run: bool
     # String to create the Source component
-    _source: str
+    _source_info: str
     # String to create the Target component
-    _target: str
+    _target_info: str
     # String to know the Source Ping information
     _source_ping: str
     # Service minimum time to sleep between iterations
@@ -62,12 +66,14 @@ class Service:
     _shard: int
 
     # Source class component
-    _source_component: Source
+    _source: Source
     # Target class component
-    _target_component: Target
+    _target: Target
 
-    # # Entities that are going to be processed by the service
-    # _entities: Set[Entity] = set()
+    # Entities that are going to be processed by the service
+    _entities: Set[Entity] = {
+        Entity.KLINE_1D,
+    }
     # # Endpoints that are going to be used depending on the entity
     # _endpoints: Dict[Entity, Endpoint] = {
     #     Entity.KLINE_1D: KlineEndpoint(interval="1d"),
@@ -102,8 +108,8 @@ class Service:
         # Intialize attributes based on args
         self._run_as_service = args.run_as_service
         self._dry_run = args.dry_run
-        self._source = args.source
-        self._target = args.target
+        self._source_info = args.source_info
+        self._target_info = args.target_info
         self._min_sleep = args.min_sleep
         self._max_sleep = args.max_sleep
         self._source_ping = args.source_ping
@@ -113,18 +119,12 @@ class Service:
         self._datapoint_limit = args.datapoint_limit
 
         # Create the Source and Target components
-        self._source_component = Source(
-            connection_string=self._source,
+        self._source = Source(
+            connection_string=self._source_info,
             ping_string=self._source_ping,
             request_timeout=self._source_request_timeout,
         )
-        self._target_component = Target(self._target)
-
-        # # Add entities that are going to be processed
-        # if self._symbol:
-        #     self._entities.add(Entity.SYMBOL)
-        # if self._kline_1d:
-        #     self._entities.add(Entity.KLINE_1D)
+        self._target = Target(connection_string=self._target_info)
 
     def run(self) -> None:
         """Run the service according to its configuration.
@@ -135,8 +135,8 @@ class Service:
         the service.
         """
         # Connect to Source and Target components
-        self._source_component.connect()
-        self._target_component.connect()
+        self._source.connect()
+        self._target.connect()
 
         # Run service according to configurtion
         if self._run_as_service:
@@ -169,48 +169,53 @@ class Service:
         logger.info(msg="Terminating continuous run.")
 
     def run_once(self) -> None:
-        """Run the process once."""
-        pass  # pragma: no cover
+        """Run the process once.
 
-    #     start_time: datetime = datetime.utcnow()
-    #     end_time: datetime
+        This function does the following:
+            1. Start by choosing an entity to fetch from source;
+            2. Then get records from source;
+                2.1 Finish if there are no records;
+            3. Process the delivery based on the entity and the records
+            received;
+            4. Persist the delivery if it is not a dry run.
+        """
+        start_time: datetime = datetime.now(tz=UTC)
+        end_time: datetime
 
-    #     entity: Entity = secrets.choice(list(self._entities))
+        # Choose the entity
+        entity: Entity = secrets.choice(list(self._entities))
 
-    #     records: List[Record] = self.scrape(entity=entity)
+        # Fetch records from source
+        # records: List[Record] = self.scrape(entity=entity)
 
-    #     if not records:
-    #         end_time = datetime.utcnow()
-    #         logger.debug(f"No files to process: {end_time - start_time} seconds.")
-    #         return
+        #     if not records:
+        #         end_time = datetime.utcnow()
+        #         logger.debug(f"No files to process: {end_time - start_time} seconds.")
+        #         return
 
-    #     delivery_id: int = self._target.get_next_delivery_id()
-    #     delivery: Delivery = {
-    #         entity: self.process(
-    #             delivery_id=delivery_id, entity=entity, records=records
-    #         )
-    #     }
+        delivery_id: int = self._target.get_next_delivery_id()
+        #     delivery: Delivery = {
+        #         entity: self.process(
+        #             delivery_id=delivery_id, entity=entity, records=records
+        #         )
+        #     }
 
-    #     # persist delivery
-    #     if not self._dry_run:
-    #         self.persist_delivery(
-    #             delivery_id=delivery_id,
-    #             entity=entity,
-    #             start_time=start_time,
-    #             delivery=delivery,
-    #         )
+        #     # persist delivery
+        #     if not self._dry_run:
+        #         self.persist_delivery(
+        #             delivery_id=delivery_id,
+        #             entity=entity,
+        #             start_time=start_time,
+        #             delivery=delivery,
+        #         )
 
-    #     if self._notifications:
-    #         self.publish_messages(delivery_id=delivery_id, delivery=delivery)
+        #     del delivery, records
 
-    #     self.increment_counters(delivery_id=delivery_id, delivery=delivery)
-
-    #     del delivery, records
-
-    #     end_time = datetime.utcnow()
-    #     logger.info(
-    #         f"Delivery {delivery_id}: processed ({end_time - start_time} seconds)."
-    #     )
+        end_time = datetime.now(tz=UTC)
+        logger.info(
+            f"Delivery {delivery_id} (Entity {entity}): "
+            f"processed ({end_time - start_time} seconds)."
+        )
 
     # def scrape(self, entity: Entity) -> List[Record]:
     #     """Scrapes based on entity received.
@@ -614,5 +619,5 @@ class Service:
         Disconnects the Source and Target components.
         """
         # Disconnect the Source and Target components
-        self._source_component.disconnect()
-        self._target_component.disconnect()
+        self._source.disconnect()
+        self._target.disconnect()

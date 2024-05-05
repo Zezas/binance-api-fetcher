@@ -45,11 +45,11 @@ class TestMain(TestCase):
         self.assertFalse(expr=args.dry_run)
         self.assertIsInstance(obj=args.dry_run, cls=bool)
         # source
-        self.assertEqual(first=args.source, second="")
-        self.assertIsInstance(obj=args.source, cls=str)
+        self.assertEqual(first=args.source_info, second="")
+        self.assertIsInstance(obj=args.source_info, cls=str)
         # target
-        self.assertEqual(first=args.target, second="")
-        self.assertIsInstance(obj=args.target, cls=str)
+        self.assertEqual(first=args.target_info, second="")
+        self.assertIsInstance(obj=args.target_info, cls=str)
         # min_sleep
         self.assertEqual(first=args.min_sleep, second=15)
         self.assertIsInstance(obj=args.min_sleep, cls=int)
@@ -87,8 +87,8 @@ class TestMain(TestCase):
         monkeypatch.setenv(name="LOG_LEVEL", value="debug")
         monkeypatch.setenv(name="RUN_AS_SERVICE", value="False")
         monkeypatch.setenv(name="DRY_RUN", value="True")
-        monkeypatch.setenv(name="SOURCE", value="source")
-        monkeypatch.setenv(name="TARGET", value="target")
+        monkeypatch.setenv(name="SOURCE_INFO", value="source_info")
+        monkeypatch.setenv(name="TARGET_INFO", value="target_info")
         monkeypatch.setenv(name="MIN_SLEEP", value="0")
         monkeypatch.setenv(name="MAX_SLEEP", value="1")
         monkeypatch.setenv(name="SOURCE_PING", value="source_ping")
@@ -112,11 +112,11 @@ class TestMain(TestCase):
         self.assertTrue(expr=args.dry_run)
         self.assertIsInstance(obj=args.dry_run, cls=bool)
         # source
-        self.assertEqual(first=args.source, second="source")
-        self.assertIsInstance(obj=args.source, cls=str)
+        self.assertEqual(first=args.source_info, second="source_info")
+        self.assertIsInstance(obj=args.source_info, cls=str)
         # target
-        self.assertEqual(first=args.target, second="target")
-        self.assertIsInstance(obj=args.target, cls=str)
+        self.assertEqual(first=args.target_info, second="target_info")
+        self.assertIsInstance(obj=args.target_info, cls=str)
         # min_sleep
         self.assertEqual(first=args.min_sleep, second=0)
         self.assertIsInstance(obj=args.min_sleep, cls=int)

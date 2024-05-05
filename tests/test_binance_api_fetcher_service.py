@@ -25,15 +25,15 @@ class TestService(TestCase):
 
     service: Service
     service_args: MagicMock
-    mock_service_source_component: MagicMock
-    mock_service_target_component: MagicMock
+    mock_service_source: MagicMock
+    mock_service_target: MagicMock
 
     @patch(target="binance_api_fetcher.model.service.Target")
     @patch(target="binance_api_fetcher.model.service.Source")
     def setUp(
         self,
-        mock_service_source_component: MagicMock,
-        mock_service_target_component: MagicMock,
+        mock_service_source: MagicMock,
+        mock_service_target: MagicMock,
     ) -> None:
         """Create a service instance to use in all tests.
 
@@ -43,9 +43,9 @@ class TestService(TestCase):
         addressed by these tests.
 
         Args:
-            mock_service_source_component: MagicMock to configure the behaviour
+            mock_service_source: MagicMock to configure the behaviour
                 of the Source class.
-            mock_service_target_component: MagicMock to configure the behaviour
+            mock_service_target: MagicMock to configure the behaviour
                 of the Target class.
         """
         # Set up the service args with the needed arguments
@@ -53,11 +53,11 @@ class TestService(TestCase):
             log_level="debug",
             run_as_service=True,
             dry_run=False,
-            source=(
+            source_info=(
                 "user=username password=password "
                 "host=localhost port=5432 dbname=binance"
             ),
-            target=(
+            target_info=(
                 "user=username password=password "
                 "host=localhost port=5432 dbname=binance"
             ),
@@ -72,8 +72,8 @@ class TestService(TestCase):
         # Set up a Service instance for all tests (call the __init__ function)
         self.service = Service(args=self.service_args)
         # Save the constructor mocks
-        self.mock_service_source_component = mock_service_source_component
-        self.mock_service_target_component = mock_service_target_component
+        self.mock_service_source = mock_service_source
+        self.mock_service_target = mock_service_target
 
     def test_init_args_assignment(self) -> None:
         """Test if args are assigned.
@@ -95,16 +95,16 @@ class TestService(TestCase):
         self.assertIsInstance(obj=self.service._dry_run, cls=bool)
         # source
         self.assertEqual(
-            first=self.service._source,
-            second=self.service_args.source,
+            first=self.service._source_info,
+            second=self.service_args.source_info,
         )
-        self.assertIsInstance(obj=self.service._source, cls=str)
+        self.assertIsInstance(obj=self.service._source_info, cls=str)
         # target
         self.assertEqual(
-            first=self.service._target,
-            second=self.service_args.target,
+            first=self.service._target_info,
+            second=self.service_args.target_info,
         )
-        self.assertIsInstance(obj=self.service._target, cls=str)
+        self.assertIsInstance(obj=self.service._target_info, cls=str)
         # min_sleep
         self.assertEqual(
             first=self.service._min_sleep, second=self.service_args.min_sleep
@@ -150,28 +150,23 @@ class TestService(TestCase):
         Source and Target constructors calls and return values.
         """
         # Assert constructor calls
-        self.mock_service_source_component.assert_called_once_with(
-            connection_string=self.service._source,
+        self.mock_service_source.assert_called_once_with(
+            connection_string=self.service._source_info,
             ping_string=self.service._source_ping,
             request_timeout=self.service._source_request_timeout,
         )
-        self.mock_service_target_component.assert_called_once_with(self.service._target)
+        self.mock_service_target.assert_called_once_with(
+            connection_string=self.service._target_info
+        )
         # Assert constructor assignments
         self.assertEqual(
-            first=self.service._source_component,
-            second=self.mock_service_source_component.return_value,
+            first=self.service._source,
+            second=self.mock_service_source.return_value,
         )
         self.assertEqual(
-            first=self.service._target_component,
-            second=self.mock_service_target_component.return_value,
+            first=self.service._target,
+            second=self.mock_service_target.return_value,
         )
-
-    # def _test_init_entities_happy_path(self) -> None:
-    #     """Test if all entities are added.
-    #
-    #     Test if all entities are added, i.e. that all if statements are True.
-    #     """
-    #     self.mock_service_declare_metrics.assert_called_once()
 
     @patch.object(target=Service, attribute="tear_down")
     @patch(target="binance_api_fetcher.model.service.logger.info")
@@ -208,8 +203,8 @@ class TestService(TestCase):
         self.service.run()
 
         # Assert Source and Target connect function calls
-        self.mock_service_source_component.return_value.connect.assert_called_once()
-        self.mock_service_target_component.return_value.connect.assert_called_once()
+        self.mock_service_source.return_value.connect.assert_called_once()
+        self.mock_service_target.return_value.connect.assert_called_once()
         # Assert logger.info is called with the correct message
         mock_logger_info.assert_called_once_with(msg="Running the service continuosly.")
         # Assert run_service is called exactly once
@@ -257,8 +252,8 @@ class TestService(TestCase):
         self.service.run()
 
         # Assert Source and Target connect function calls
-        self.mock_service_source_component.return_value.connect.assert_called_once()
-        self.mock_service_target_component.return_value.connect.assert_called_once()
+        self.mock_service_source.return_value.connect.assert_called_once()
+        self.mock_service_target.return_value.connect.assert_called_once()
 
         # Assert logger.info is called with the correct message
         mock_logger_info.assert_called_once_with(msg="Running the service once.")
@@ -409,5 +404,5 @@ class TestService(TestCase):
         self.service.tear_down()
 
         # Assert Source and Target connect function calls
-        self.mock_service_source_component.return_value.disconnect.assert_called_once()
-        self.mock_service_target_component.return_value.disconnect.assert_called_once()
+        self.mock_service_source.return_value.disconnect.assert_called_once()
+        self.mock_service_target.return_value.disconnect.assert_called_once()

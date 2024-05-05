@@ -916,7 +916,7 @@ class TestTarget(TestCase):
         """Test the Target disconnect function.
 
         Test if:
-            1. Psycopg2 Error is caught and handled cursor
+            1. Psycopg2 Error is caught and handled when cursor
             close function is called.
 
         Args:
@@ -971,7 +971,7 @@ class TestTarget(TestCase):
         """Test the Target disconnect function.
 
         Test if:
-            1. Exception is caught and handled cursor
+            1. Exception is caught and handled when cursor
             close function is called.
 
         Args:
@@ -1084,7 +1084,7 @@ class TestTarget(TestCase):
         """Test the Target disconnect function.
 
         Test if:
-            1. Exception is caught and handled connection
+            1. Exception is caught and handled when connection
             close function is called.
 
         Args:
@@ -1128,3 +1128,425 @@ class TestTarget(TestCase):
         # Tear Down - reset conditions that were updated for test
         del self.target._target_connection
         del self.target._target_cursor
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.debug")
+    @patch.object(target=Target, attribute="cursor", new_callable=PropertyMock)
+    @pytest.mark.unit
+    def test_target_get_next_delivery_id_success(
+        self,
+        mock_cursor: MagicMock,
+        mock_logger_debug: MagicMock,
+    ) -> None:
+        """Test the Target get next delivery id function.
+
+        Test if:
+            1. Function is called and executes successfully.
+
+        Args:
+            mock_cursor: Mock for the cursor
+                function call.
+            mock_logger_debug: Mock for the logger.debug
+                function call.
+        """
+        # Set up attributes to meet conditions
+        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_fetchone.return_value = (1,)
+
+        # Call the get next delivery id function
+        test_get_next_delivery_id = self.target.get_next_delivery_id()
+
+        # Assert that ping_datasoruce is called once
+        mock_cursor.assert_called_once()
+        # Assert that cursor execute is called once with args
+        mock_cursor_execute.assert_called_once_with(
+            query="SELECT NEXTVAL('delivery_id_delivery_api_seq');"
+        )
+        # Assert that cursor fetchone is called once
+        mock_cursor_fetchone.assert_called_once()
+        # Assert that the logger.error is called with the correct message
+        mock_logger_debug.assert_called_with(msg="Returning next delivery id.")
+        # Assert that the test result
+        self.assertIsInstance(obj=test_get_next_delivery_id, cls=int)
+        self.assertEqual(
+            first=test_get_next_delivery_id,
+            second=mock_cursor_fetchone.return_value[0],
+        )
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch(target="binance_api_fetcher.persistence.target.logger.warning")
+    @patch.object(target=Target, attribute="cursor", new_callable=PropertyMock)
+    @pytest.mark.unit
+    def test_target_get_next_delivery_id_result_is_None(
+        self,
+        mock_cursor: MagicMock,
+        mock_logger_warning: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target get next delivery id function.
+
+        Test if:
+            1. Function is called and an error is raised
+            because of a wrong result.
+
+        Args:
+            mock_cursor: Mock for the cursor
+                function call.
+            mock_logger_warning: Mock for the logger.warning
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_fetchone.return_value = None
+
+        # Call the get next delivery id function
+        with self.assertRaises(TargetError) as context:
+            self.target.get_next_delivery_id()
+
+        # Assert that ping_datasoruce is called once
+        mock_cursor.assert_called_once()
+        # Assert that cursor execute is called once with args
+        mock_cursor_execute.assert_called_once_with(
+            query="SELECT NEXTVAL('delivery_id_delivery_api_seq');"
+        )
+        # Assert that cursor fetchone is called once
+        mock_cursor_fetchone.assert_called_once()
+        # Assert that the logger.warning is called with the correct message
+        mock_logger_warning.assert_called_with(
+            msg="Query result is None or result as no elements "
+            "or result first element is not an int."
+        )
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got an unexpected error while interacting with target datasource: "
+            "TargetError - Query result validation error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error getting the next delivery id "
+            "from the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=TargetError)
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch(target="binance_api_fetcher.persistence.target.logger.warning")
+    @patch.object(target=Target, attribute="cursor", new_callable=PropertyMock)
+    @pytest.mark.unit
+    def test_target_get_next_delivery_id_result_is_empty(
+        self,
+        mock_cursor: MagicMock,
+        mock_logger_warning: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target get next delivery id function.
+
+        Test if:
+            1. Function is called and an error is raised
+            because of a wrong result.
+
+        Args:
+            mock_cursor: Mock for the cursor
+                function call.
+            mock_logger_warning: Mock for the logger.warning
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_fetchone.return_value = ()
+
+        # Call the get next delivery id function
+        with self.assertRaises(TargetError) as context:
+            self.target.get_next_delivery_id()
+
+        # Assert that ping_datasoruce is called once
+        mock_cursor.assert_called_once()
+        # Assert that cursor execute is called once with args
+        mock_cursor_execute.assert_called_once_with(
+            query="SELECT NEXTVAL('delivery_id_delivery_api_seq');"
+        )
+        # Assert that cursor fetchone is called once
+        mock_cursor_fetchone.assert_called_once()
+        # Assert that the logger.warning is called with the correct message
+        mock_logger_warning.assert_called_with(
+            msg="Query result is None or result as no elements "
+            "or result first element is not an int."
+        )
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got an unexpected error while interacting with target datasource: "
+            "TargetError - Query result validation error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error getting the next delivery id "
+            "from the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=TargetError)
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch(target="binance_api_fetcher.persistence.target.logger.warning")
+    @patch.object(target=Target, attribute="cursor", new_callable=PropertyMock)
+    @pytest.mark.unit
+    def test_target_get_next_delivery_id_result_has_no_int(
+        self,
+        mock_cursor: MagicMock,
+        mock_logger_warning: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target get next delivery id function.
+
+        Test if:
+            1. Function is called and an error is raised
+            because of a wrong result.
+
+        Args:
+            mock_cursor: Mock for the cursor
+                function call.
+            mock_logger_warning: Mock for the logger.warning
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_fetchone.return_value = ("asd",)
+
+        # Call the get next delivery id function
+        with self.assertRaises(TargetError) as context:
+            self.target.get_next_delivery_id()
+
+        # Assert that ping_datasoruce is called once
+        mock_cursor.assert_called_once()
+        # Assert that cursor execute is called once with args
+        mock_cursor_execute.assert_called_once_with(
+            query="SELECT NEXTVAL('delivery_id_delivery_api_seq');"
+        )
+        # Assert that cursor fetchone is called once
+        mock_cursor_fetchone.assert_called_once()
+        # Assert that the logger.warning is called with the correct message
+        mock_logger_warning.assert_called_with(
+            msg="Query result is None or result as no elements "
+            "or result first element is not an int."
+        )
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got an unexpected error while interacting with target datasource: "
+            "TargetError - Query result validation error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error getting the next delivery id "
+            "from the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=TargetError)
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch.object(target=Target, attribute="cursor", new_callable=PropertyMock)
+    @pytest.mark.unit
+    def test_target_get_next_delivery_id_cursor_execute_psycopg2_error_handling(
+        self,
+        mock_cursor: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target get next delivery id function.
+
+        Test if:
+            1. Exception is caught and handled when cursor
+            fetchone function is called.
+
+        Args:
+            mock_cursor: Mock for the cursor
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_execute.side_effect = psycopg2.Error("Testing error")
+
+        # Call the get next delivery id function
+        with self.assertRaises(TargetError) as context:
+            self.target.get_next_delivery_id()
+
+        # Assert that ping_datasoruce is called once
+        mock_cursor.assert_called_once()
+        # Assert that cursor execute is called once with args
+        mock_cursor_execute.assert_called_once_with(
+            query="SELECT NEXTVAL('delivery_id_delivery_api_seq');"
+        )
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got a psycopg2 error while interacting with target datasource: "
+            "Error - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error getting the next delivery id "
+            "from the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=psycopg2.Error)
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch.object(target=Target, attribute="cursor", new_callable=PropertyMock)
+    @pytest.mark.unit
+    def test_target_get_next_delivery_id_cursor_execute_exception_error_handling(
+        self,
+        mock_cursor: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target get next delivery id function.
+
+        Test if:
+            1. Exception is caught and handled when cursor
+            fetchone function is called.
+
+        Args:
+            mock_cursor: Mock for the cursor
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_execute.side_effect = Exception("Testing error")
+
+        # Call the get next delivery id function
+        with self.assertRaises(TargetError) as context:
+            self.target.get_next_delivery_id()
+
+        # Assert that ping_datasoruce is called once
+        mock_cursor.assert_called_once()
+        # Assert that cursor execute is called once with args
+        mock_cursor_execute.assert_called_once_with(
+            query="SELECT NEXTVAL('delivery_id_delivery_api_seq');"
+        )
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got an unexpected error while interacting with target datasource: "
+            "Exception - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error getting the next delivery id "
+            "from the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=Exception)
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch.object(target=Target, attribute="cursor", new_callable=PropertyMock)
+    @pytest.mark.unit
+    def test_target_get_next_delivery_id_cursor_fetchone_psycopg2_error_handling(
+        self,
+        mock_cursor: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target get next delivery id function.
+
+        Test if:
+            1. Exception is caught and handled when cursor
+            fetchone function is called.
+
+        Args:
+            mock_cursor: Mock for the cursor
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_fetchone.side_effect = psycopg2.Error("Testing error")
+
+        # Call the get next delivery id function
+        with self.assertRaises(TargetError) as context:
+            self.target.get_next_delivery_id()
+
+        # Assert that ping_datasoruce is called once
+        mock_cursor.assert_called_once()
+        # Assert that cursor execute is called once with args
+        mock_cursor_execute.assert_called_once_with(
+            query="SELECT NEXTVAL('delivery_id_delivery_api_seq');"
+        )
+        # Assert that cursor fetchone is called once
+        mock_cursor_fetchone.assert_called_once()
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got a psycopg2 error while interacting with target datasource: "
+            "Error - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error getting the next delivery id "
+            "from the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=psycopg2.Error)
+
+    @patch(target="binance_api_fetcher.persistence.target.logger.error")
+    @patch.object(target=Target, attribute="cursor", new_callable=PropertyMock)
+    @pytest.mark.unit
+    def test_target_get_next_delivery_id_cursor_fetchone_exception_error_handling(
+        self,
+        mock_cursor: MagicMock,
+        mock_logger_error: MagicMock,
+    ) -> None:
+        """Test the Target get next delivery id function.
+
+        Test if:
+            1. Exception is caught and handled when cursor
+            fetchone function is called.
+
+        Args:
+            mock_cursor: Mock for the cursor
+                function call.
+            mock_logger_error: Mock for the logger.error
+                function call.
+        """
+        # Set up attributes to meet conditions
+        mock_cursor_execute = mock_cursor.return_value.execute
+        mock_cursor_fetchone = mock_cursor.return_value.fetchone
+        mock_cursor_fetchone.side_effect = Exception("Testing error")
+
+        # Call the get next delivery id function
+        with self.assertRaises(TargetError) as context:
+            self.target.get_next_delivery_id()
+
+        # Assert that ping_datasoruce is called once
+        mock_cursor.assert_called_once()
+        # Assert that cursor execute is called once with args
+        mock_cursor_execute.assert_called_once_with(
+            query="SELECT NEXTVAL('delivery_id_delivery_api_seq');"
+        )
+        # Assert that cursor fetchone is called once
+        mock_cursor_fetchone.assert_called_once()
+        # Assert that the logger.error is called with the correct message
+        mock_logger_error.assert_called_with(
+            msg="Got an unexpected error while interacting with target datasource: "
+            "Exception - Testing error."
+        )
+        # Assert that the TargetError logs the correct message
+        self.assertEqual(
+            first=str(context.exception),
+            second="Got an error getting the next delivery id "
+            "from the target datasource.",
+        )
+        # Assert the exception chaining (because we are already in Python 3.12)
+        self.assertIsInstance(obj=context.exception.__cause__, cls=Exception)

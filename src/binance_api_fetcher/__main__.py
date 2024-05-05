@@ -71,20 +71,20 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--source",
-        dest="source",
+        "--source_info",
+        dest="source_info",
         type=str,
         required=False,
-        default=os.environ.get("SOURCE", default=""),
+        default=os.environ.get("SOURCE_INFO", default=""),
         help="Binance API url. e.g.: https://api.binance.com/api/v3/",
     )
 
     parser.add_argument(
-        "--target",
-        dest="target",
+        "--target_info",
+        dest="target_info",
         type=str,
         required=False,
-        default=os.environ.get("TARGET", default=""),
+        default=os.environ.get("TARGET_INFO", default=""),
         help="Postgres connection URL. e.g.: "
         "user=username password=password host=localhost port=5432 dbname=binance",
     )

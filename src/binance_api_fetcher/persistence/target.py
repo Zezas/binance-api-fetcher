@@ -157,6 +157,7 @@ class Target:
             result: Optional[Tuple] = cursor.fetchone()
             # self.commit_transaction()
 
+            # TODO maybe add an error message if result is None
             ping_response: str = result[0] if result is not None else ""
 
             return ping_response
@@ -178,7 +179,7 @@ class Target:
         """Begins a transaction.
 
         By default, with psycopg2 the BEGIN TRANSACTION statement is always
-        executed. So in this function, we just need to create make sure a cursor
+        executed. So in this function, we just need to make sure a cursor
         is attributed to our object's cursor, and set the in_progress control
         attribute to true.
         """
@@ -283,18 +284,55 @@ class Target:
                 "Got an error disconnecting from the target datasource."
             ) from error
 
-    # def get_next_delivery_id(self) -> int:
-    #     """Gets next delivery id.
+    def get_next_delivery_id(self) -> int:
+        """Gets next delivery id.
 
-    #     Returns:
-    #         Next delivery id.
-    #     """
-    #     cursor = self.cursor
-    #     # ALTER SEQUENCE delivery_id_delivery_api_seq RESTART;
-    #     cursor.execute("SELECT NEXTVAL('delivery_id_delivery_api_seq');")
-    #     res = cursor.fetchone()
+        Create a cursor and execute a query to fetch the next
+        delivery id. The delivery id is a sequence in the database,
+        so we use the SELECT NEXTVAL statement.
 
-    #     return res[0]
+        Returns:
+            Next delivery id.
+
+        Raises:
+            TargetError: Raised when an error occurs while
+                interacting with target.
+        """
+        try:
+            cursor: Cursor = self.cursor
+            # TODO remove comment below
+            # ALTER SEQUENCE delivery_id_delivery_api_seq RESTART;
+            cursor.execute(query="SELECT NEXTVAL('delivery_id_delivery_api_seq');")
+            result: Optional[Tuple] = cursor.fetchone()
+
+            # This validation must be done, however it is not expected
+            # to happen since we are fetching the next number of a sequence
+            if result is None or len(result) <= 0 or not isinstance(result[0], int):
+                logger.warning(
+                    msg="Query result is None or result as no elements "
+                    "or result first element is not an int."
+                )
+                raise TargetError("Query result validation error")
+
+            logger.debug(msg="Returning next delivery id.")
+            return result[0]
+        except psycopg2.Error as error:
+            logger.error(
+                msg=f"Got a psycopg2 error while interacting with target datasource: "
+                f"{type(error).__name__} - {error}."
+            )
+            raise TargetError(
+                "Got an error getting the next delivery id from the target datasource."
+            ) from error
+        except Exception as error:
+            logger.error(
+                msg=f"Got an unexpected error while "
+                "interacting with target datasource: "
+                f"{type(error).__name__} - {error}."
+            )
+            raise TargetError(
+                "Got an error getting the next delivery id from the target datasource."
+            ) from error
 
     # def get_next_event_id(self, n: int = 1) -> Iterator[int]:
     #     """Gets next event id.
