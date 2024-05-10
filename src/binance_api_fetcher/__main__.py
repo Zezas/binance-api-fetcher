@@ -8,7 +8,7 @@ import os
 from sys import stdout
 
 from binance_api_fetcher import __version__
-from binance_api_fetcher.model.service import Service
+from binance_api_fetcher.service import Service
 
 logger: Logger = logging.getLogger(__name__)
 

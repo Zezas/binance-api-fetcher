@@ -1,9 +1,10 @@
 """Test binance_api_fetcher Service class."""
 
+from datetime import UTC
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from binance_api_fetcher.model.service import Service  # type: ignore
+from binance_api_fetcher.service import Service  # type: ignore
 import pytest
 
 
@@ -28,8 +29,8 @@ class TestService(TestCase):
     mock_service_source: MagicMock
     mock_service_target: MagicMock
 
-    @patch(target="binance_api_fetcher.model.service.Target")
-    @patch(target="binance_api_fetcher.model.service.Source")
+    @patch(target="binance_api_fetcher.service.Target")
+    @patch(target="binance_api_fetcher.service.Source")
     def setUp(
         self,
         mock_service_source: MagicMock,
@@ -48,6 +49,10 @@ class TestService(TestCase):
             mock_service_target: MagicMock to configure the behaviour
                 of the Target class.
         """
+        # Save the constructor mocks
+        self.mock_service_source = mock_service_source
+        self.mock_service_target = mock_service_target
+
         # Set up the service args with the needed arguments
         self.service_args = MagicMock(
             log_level="debug",
@@ -71,9 +76,8 @@ class TestService(TestCase):
         )
         # Set up a Service instance for all tests (call the __init__ function)
         self.service = Service(args=self.service_args)
-        # Save the constructor mocks
-        self.mock_service_source = mock_service_source
-        self.mock_service_target = mock_service_target
+
+        # TODO Set up service._entities???
 
     def test_init_args_assignment(self) -> None:
         """Test if args are assigned.
@@ -169,7 +173,7 @@ class TestService(TestCase):
         )
 
     @patch.object(target=Service, attribute="tear_down")
-    @patch(target="binance_api_fetcher.model.service.logger.info")
+    @patch(target="binance_api_fetcher.service.logger.info")
     @patch.object(target=Service, attribute="run_once")
     @patch.object(target=Service, attribute="run_service")
     @pytest.mark.unit
@@ -218,7 +222,7 @@ class TestService(TestCase):
         self.service._run_as_service = attr_original_value
 
     @patch.object(target=Service, attribute="tear_down")
-    @patch(target="binance_api_fetcher.model.service.logger.info")
+    @patch(target="binance_api_fetcher.service.logger.info")
     @patch.object(target=Service, attribute="run_once")
     @patch.object(target=Service, attribute="run_service")
     @pytest.mark.unit
@@ -267,7 +271,7 @@ class TestService(TestCase):
         # Reset orignal value of run_as_service
         self.service._run_as_service = attr_original_value
 
-    @patch(target="binance_api_fetcher.model.service.logger")
+    @patch(target="binance_api_fetcher.service.logger")
     @patch.object(
         target=Service, attribute="run_once", side_effect=Exception("Testing error")
     )
@@ -300,18 +304,62 @@ class TestService(TestCase):
         # Assert logger.info is called with the correct message
         mock_logger.info.assert_called_once_with(msg="Terminating continuous run.")
 
+    @patch(target="binance_api_fetcher.service.logger")
+    @patch(target="binance_api_fetcher.service.Target")
+    @patch(target="binance_api_fetcher.service.Entity")
+    @patch(target="binance_api_fetcher.service.secrets.choice")
+    @patch(target="binance_api_fetcher.service.datetime")
     @pytest.mark.unit
-    def test_service_run_once(
+    def test_service_run_once_success(
         self,
+        mock_datetime: MagicMock,
+        mock_secrets_choice: MagicMock,
+        mock_entity: MagicMock,
+        mock_target: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         """Test the Service run_once function.
 
         Test if:
             1. asdasdasd;
             2. asdasd.
+
+        Args:
+            mock_datetime: mock for the datetime function calls.
+            mock_secrets_choice: Mock for secrets choice function call.
+            mock_entity: Mock for Entity class.
+            mock_target: Mock for Target function calls.
+            mock_logger: Mock for logger function calls.
         """
-        # TODO implement
-        pass
+        # Set up new target value
+        old_attr = self.service._target
+        self.service._target = mock_target
+        # Set up mock return values
+        mock_datetime.now.return_value = mock_datetime
+        mock_secrets_choice.return_value = mock_entity
+        mock_target.get_next_delivery_id.return_value = 1
+        #  Set up test variables
+        test_start_and_end_time = mock_datetime.now.return_value
+        test_entity = mock_secrets_choice.return_value
+        test_delivery_id = mock_target.get_next_delivery_id.return_value
+
+        # Call run_once
+        self.service.run_once()
+
+        # Assert that datetime.now is called with the correct arguments
+        mock_datetime.now.assert_called_with(tz=UTC)
+        assert mock_datetime.now.call_count == 2
+        # Assert that secrets.choice  is called with the correct arguments
+        mock_secrets_choice.assert_called_once_with(seq=list(self.service._entities))
+        # Assert that logger.info is called with the correct message
+        mock_logger.info.assert_called_once_with(
+            msg=f"Delivery {test_delivery_id} (Entity {test_entity}): processed "
+            f"({test_start_and_end_time - test_start_and_end_time} "
+            "seconds)."
+        )
+
+        # Tear down - reset target value
+        self.service._target = old_attr
 
     @pytest.mark.unit
     def test_service_scrape(

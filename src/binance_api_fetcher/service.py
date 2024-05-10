@@ -183,7 +183,7 @@ class Service:
         end_time: datetime
 
         # Choose the entity
-        entity: Entity = secrets.choice(list(self._entities))
+        entity: Entity = secrets.choice(seq=list(self._entities))
 
         # Fetch records from source
         # records: List[Record] = self.scrape(entity=entity)
@@ -213,7 +213,7 @@ class Service:
 
         end_time = datetime.now(tz=UTC)
         logger.info(
-            f"Delivery {delivery_id} (Entity {entity}): "
+            msg=f"Delivery {delivery_id} (Entity {entity}): "
             f"processed ({end_time - start_time} seconds)."
         )
 

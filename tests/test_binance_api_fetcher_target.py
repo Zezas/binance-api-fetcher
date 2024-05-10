@@ -874,8 +874,8 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close: MagicMock = self.target._target_cursor.close
-        mock_connection_close: MagicMock = self.target._target_connection.close
+        mock_cursor_close = self.target._target_cursor.close
+        mock_connection_close = self.target._target_connection.close
         self.target._transaction_in_progress = True
         self.target._is_connected = True
 
@@ -931,7 +931,7 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close: MagicMock = self.target._target_cursor.close
+        mock_cursor_close = self.target._target_cursor.close
         mock_cursor_close.side_effect = psycopg2.Error("Testing error")
 
         # Call the disconnect function
@@ -986,7 +986,7 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close: MagicMock = self.target._target_cursor.close
+        mock_cursor_close = self.target._target_cursor.close
         mock_cursor_close.side_effect = Exception("Testing error")
 
         # Call the disconnect function
@@ -1041,8 +1041,8 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close: MagicMock = self.target._target_cursor.close
-        mock_connection_close: MagicMock = self.target._target_connection.close
+        mock_cursor_close = self.target._target_cursor.close
+        mock_connection_close = self.target._target_connection.close
         mock_connection_close.side_effect = psycopg2.Error("Testing error")
 
         # Call the disconnect function
@@ -1099,8 +1099,8 @@ class TestTarget(TestCase):
         # Set up attributes to meet conditions
         self.target._target_connection = mock_psycopg2_connect.return_value
         self.target._target_cursor = self.target._target_connection.cursor.return_value
-        mock_cursor_close: MagicMock = self.target._target_cursor.close
-        mock_connection_close: MagicMock = self.target._target_connection.close
+        mock_cursor_close = self.target._target_cursor.close
+        mock_connection_close = self.target._target_connection.close
         mock_connection_close.side_effect = Exception("Testing error")
 
         # Call the disconnect function
